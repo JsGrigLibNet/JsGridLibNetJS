@@ -1,0 +1,1 @@
+".paket/paket.exe" install --clean-redirects --redirects --force

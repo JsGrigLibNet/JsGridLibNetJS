@@ -1,0 +1,25 @@
+{
+  "name": "jsgridlibjs",
+  "version": "1.0.0",
+  "description": "Js grid helper on the UI for the JsGrid Lib for DotNet backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JsGrigLibNet/JsGridLibNetJS.git"
+  },
+  "keywords": [
+    "jsgrid",
+    "datagrid",
+    "gridview",
+    "grid"
+  ],
+  "author": "Sam Bamgboye",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JsGrigLibNet/JsGridLibNetJS/issues"
+  },
+  "homepage": "https://github.com/JsGrigLibNet/JsGridLibNetJS#readme"
+}
