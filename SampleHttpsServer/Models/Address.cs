@@ -1,5 +1,7 @@
 ﻿namespace SampleHttpsServer
 {
+    using JsGridLib.Contracts;
+
     public  class Employee : IJsGridEntity
     {
         public string EmployeeName { get; set; }

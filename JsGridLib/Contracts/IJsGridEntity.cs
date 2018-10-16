@@ -1,4 +1,4 @@
-﻿namespace SampleHttpsServer
+﻿namespace JsGridLib.Contracts
 {
     public interface IJsGridEntity
     {

@@ -1,50 +1,61 @@
-﻿namespace SampleHttpsServer
+﻿namespace JsGridLib.Services
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.Linq;
     using System.Net.Http;
     using System.Reflection;
     using System.Web;
-    using SampleHttpsServer.JsGridModule;
+    using JsGridLib.Contracts;
+    using JsGridLib.Models;
 
-    public class JsGridDataService<TEntity,TPoco>
-        where TPoco : IJsGridEntity, new()
+    public class JsGridDataService<TEntity, TReadable, TUpdateable, TCreatable, TDeletable>
+        where TReadable : IJsGridEntity, new()
         where TEntity : IJsGridEntity, new()
+        where TUpdateable : new()
+        where TDeletable : new()
+        where TCreatable : new()
     {
-        IJsGridStorage<TEntity> JsGridDataStorage;
-             Func<TPoco,TEntity> PocoToEntityConverter;
-        Func<TEntity,TPoco> EntityToPocoConverter;
-        public JsGridDataService(IJsGridStorage<TEntity> jsGridDataStorage, Func<TPoco, TEntity> pocoToEntityConverter, Func<TEntity, TPoco> entityToPocoConverter)
-        {
-            this.JsGridDataStorage = jsGridDataStorage;
-            this.EntityToPocoConverter = entityToPocoConverter;
-            this.PocoToEntityConverter = pocoToEntityConverter;
-        }
-        
-        public JsGridStorageStatistics<TPoco> GetAll(HttpRequestMessage request, Func<IEnumerable<TEntity>, TEntity, IEnumerable<TEntity>> clientFiltering, int take, int skip)
-        {
-            var sample = GetFilterInstance<TPoco>(HttpUtility.ParseQueryString(request.RequestUri.Query));
+        readonly Func<TEntity, TReadable> entityToReadableConverter;
+        readonly IJsGridStorage<TEntity> jsGridDataStorage;
+        readonly Func<TReadable, TEntity> pocoToEntityConverter;
 
-            var result = JsGridDataStorage.LoadAll(this.PocoToEntityConverter(sample), clientFiltering,take,skip);
-            return new JsGridStorageStatistics<TPoco>()
+        public JsGridDataService(
+            IJsGridStorage<TEntity> jsGridDataStorage,
+            Func<TReadable, TEntity> pocoToEntityConverter,
+            Func<TEntity, TReadable> entityToReadableConverter,
+            bool includeIdField)
+        {
+            this.IncludeIdField = includeIdField;
+            this.jsGridDataStorage = jsGridDataStorage;
+            this.entityToReadableConverter = entityToReadableConverter;
+            this.pocoToEntityConverter = pocoToEntityConverter;
+        }
+
+        bool IncludeIdField { get; }
+
+        public JsGridStorageStatistics<TReadable> GetAll(HttpRequestMessage request, Func<IEnumerable<TEntity>, TEntity, IEnumerable<TEntity>> clientFiltering, int take, int skip)
+        {
+            var sample = this.GetFilterInstance<TReadable>(HttpUtility.ParseQueryString(request.RequestUri.Query));
+
+            JsGridStorageStatistics<TEntity> result = this.jsGridDataStorage.LoadAll(this.pocoToEntityConverter(sample), clientFiltering, take, skip);
+            return new JsGridStorageStatistics<TReadable>
             {
                 Total = result.Total,
-                Results = result.Results.Select(x=> this.EntityToPocoConverter(x))
+                Results = result.Results.Select(x => this.entityToReadableConverter(x))
             };
         }
 
-      public  T GetFilterInstance<T>(  NameValueCollection fil)
+        public T GetFilterInstance<T>(NameValueCollection fil)
             where T : new()
         {
             var filterObj = new T();
             if (fil == null || fil.Count == 0)
             {
-                var keys = fil.AllKeys;
+                string[] keys = fil.AllKeys;
 
-                foreach (var o in keys)
+                foreach (string o in keys)
                 {
                     Type type = typeof(T);
 
@@ -57,37 +68,32 @@
             return filterObj;
         }
 
-
-    
-        public JsGridObject<TPoco> GetSchemaAndSettings()
+        public JsGridObject<TReadable> GetSchemaAndSettings()
         {
-            var t = new SchemaFactory().SchemaFromType<TPoco>();
-            var res = new JsGridObject<TPoco>()
+            var res = new JsGridObject<TReadable>
             {
-                Fields = t.Fields,
+                FieldsReadable = new SchemaFactory().SchemaFromType<TReadable>(this.IncludeIdField).Fields,
+                FieldsUpdateable = new SchemaFactory().SchemaFromType<TUpdateable>(this.IncludeIdField).Fields,
+                FieldsDeletable = new SchemaFactory().SchemaFromType<TDeletable>(this.IncludeIdField).Fields,
+                FieldsCreatable = new SchemaFactory().SchemaFromType<TCreatable>(this.IncludeIdField).Fields,
                 Settings = new JsGridTableSettings()
             };
             return res;
         }
-       
-        public void Post(TPoco client)
-        {
-            JsGridDataStorage.Update(client.Id,this.PocoToEntityConverter(client));
 
+        public void Post(TEntity client)
+        {
+            this.jsGridDataStorage.Update(client.Id, client);
         }
 
-
-      
-        public void Put(TPoco editedClient)
+        public void Put(TEntity editedClient)
         {
-           
-            JsGridDataStorage.Save(this.PocoToEntityConverter(editedClient));
+            this.jsGridDataStorage.Save(editedClient);
         }
 
-       
-        public void Delete(TPoco editedClient)
+        public void Delete(TEntity editedClient)
         {
-            JsGridDataStorage.Delete(editedClient.Id, this.PocoToEntityConverter(editedClient));
+            this.jsGridDataStorage.Delete(editedClient.Id, editedClient);
         }
     }
 }

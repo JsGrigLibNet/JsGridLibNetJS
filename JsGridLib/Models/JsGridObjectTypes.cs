@@ -1,6 +1,7 @@
-﻿namespace SampleHttpsServer.JsGridModule
+﻿namespace JsGridLib.Models
 {
-    public enum JsGridObjectTypes {
+    public enum JsGridObjectTypes
+    {
         Enum,
         Dictionary,
         Array,

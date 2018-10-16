@@ -1,4 +1,4 @@
-﻿namespace SampleHttpsServer
+﻿namespace JsGridLib.Models
 {
     public enum JsGridFieldType
     {
@@ -6,6 +6,6 @@
         Number,
         Select,
         CheckBox,
-        Control
+        Date
     }
 }

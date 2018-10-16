@@ -1,8 +1,8 @@
-﻿namespace SampleHttpsServer
+﻿namespace JsGridLib.Models
 {
     public class PagerRenderer
     {
-        public int pageIndex;
         public int pageCount;
+        public int pageIndex;
     }
 }

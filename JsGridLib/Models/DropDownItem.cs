@@ -1,4 +1,4 @@
-﻿namespace SampleHttpsServer.JsGridModule
+﻿namespace JsGridLib.Models
 {
     public class DropDownItem
     {

@@ -124,6 +124,9 @@
     <Content Include="public\jquery-ui-bootstrap\third-party\wijmo\jquery.mousewheel.min.js" />
     <Content Include="public\jquery-ui-bootstrap\third-party\wijmo\jquery.wijmo-open.1.5.0.css" />
     <Content Include="public\jquery-ui-bootstrap\third-party\wijmo\jquery.wijmo-open.1.5.0.min.js" />
+    <EmbeddedResource Include="public\jsgridlibjs.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <Content Include="public\lib\jquery-1.10.2.js" />
     <Content Include="public\lib\jquery-ui.css" />
     <Content Include="public\lib\jquery-ui.js" />
@@ -149,6 +152,10 @@
   </Choose>
   <Import Project="..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform\build\$(__paket__Microsoft_CodeDom_Providers_DotNetCompilerPlatform_props).props" Condition="Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform\build\$(__paket__Microsoft_CodeDom_Providers_DotNetCompilerPlatform_props).props')" Label="Paket" />
   <ItemGroup>
+    <ProjectReference Include="..\JsGridLibJS\JsGridLibJS.csproj">
+      <Project>{9c36b32f-e7e3-4e79-a686-984bb9c69c68}</Project>
+      <Name>JsGridLibJS</Name>
+    </ProjectReference>
     <ProjectReference Include="..\JsGridLib\JsGridLib.csproj">
       <Project>{1809FC7E-8125-475E-A444-378433BBF089}</Project>
       <Name>JsGridLib</Name>
