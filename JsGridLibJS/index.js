@@ -93,7 +93,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
             }
         };
         var jsGridSetup = {
-            height: composite.settings.height,
+            height: gridApp.height || "700px",
             width: composite.settings.width,
             editing: composite.settings.editing,
             autoload: composite.settings.autoload,

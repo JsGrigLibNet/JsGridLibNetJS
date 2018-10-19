@@ -8,19 +8,105 @@
     using JsGridLib.Services;
     
 
-    public class GenericJsGridController<T> : GenericJsGridController<T, T, T, T, T>
-        where T : class, IJsGridEntity, new()
+    public class GenericJsGridController<TEntity> : GenericJsGridController<TEntity, TEntity, TEntity, TEntity, TEntity>
+        where TEntity : class, IJsGridEntity, new()
     {
-        public GenericJsGridController(bool includeIdField, Func<IEnumerable<T>, T, IEnumerable<T>> filter, object validationDefinition, IJsGridStorage<T> storage)
+        public GenericJsGridController(bool includeIdField, Func<IEnumerable<TEntity>, TEntity, IEnumerable<TEntity>> filter, object validationDefinition, IJsGridStorage<TEntity> storage)
             : base(includeIdField, filter, validationDefinition, storage, pe => pe, pe => pe, pe => pe, pe => pe, pe => pe)
         {
         }
 
-        public GenericJsGridController(Func<IEnumerable<T>, T, IEnumerable<T>> filter, object validationDefinition, IJsGridStorage<T> storage)
+        public GenericJsGridController(Func<IEnumerable<TEntity>, TEntity, IEnumerable<TEntity>> filter, object validationDefinition, IJsGridStorage<TEntity> storage)
             : base(false, filter, validationDefinition, storage, pe => pe, pe => pe, pe => pe, pe => pe, pe => pe)
         {
         }
     }
+    public class GenericJsGridController<TEntity, TReadable> : GenericJsGridController<TEntity, TReadable, TReadable, TReadable, TReadable>
+        where TReadable : class, IJsGridEntity, new()
+        where TEntity : class, IJsGridEntity, new()
+    {
+        public GenericJsGridController(bool includeIdField,
+            Func<IEnumerable<TEntity>, TEntity, IEnumerable<TEntity>> filter,
+            object validationDefinition,
+            IJsGridStorage<TEntity> storage,
+            Func<TReadable, TEntity> pocoToEntityConverter,
+            Func<TEntity, TReadable> entityToPocoConverter)
+            : base(includeIdField, filter, validationDefinition, storage, pocoToEntityConverter, entityToPocoConverter, pocoToEntityConverter, pocoToEntityConverter, pocoToEntityConverter)
+        {
+        }
+
+        public GenericJsGridController(
+            Func<IEnumerable<TEntity>, TEntity, IEnumerable<TEntity>> filter,
+            object validationDefinition,
+            IJsGridStorage<TEntity> storage,
+            Func<TReadable, TEntity> pocoToEntityConverter,
+            Func<TEntity, TReadable> entityToPocoConverter)
+            : base(false, filter, validationDefinition, storage, pocoToEntityConverter, entityToPocoConverter, pocoToEntityConverter, pocoToEntityConverter, pocoToEntityConverter)
+        {
+        }
+    }
+
+
+    public class GenericJsGridController<TEntity, TReadable, TUpdateable> : GenericJsGridController<TEntity, TReadable, TUpdateable, TReadable, TReadable>
+        where TReadable : class, IJsGridEntity, new()
+        where TEntity : class, IJsGridEntity, new()
+        where TUpdateable : class, IJsGridEntity, new()
+    {
+        public GenericJsGridController(bool includeIdField,
+            Func<IEnumerable<TEntity>, TEntity, IEnumerable<TEntity>> filter,
+            object validationDefinition,
+            IJsGridStorage<TEntity> storage,
+            Func<TReadable, TEntity> pocoToEntityConverter,
+            Func<TEntity, TReadable> entityToPocoConverter,
+            Func<TUpdateable, TEntity> editableToEntityConverter)
+            : base(includeIdField, filter, validationDefinition, storage, pocoToEntityConverter, entityToPocoConverter, editableToEntityConverter, pocoToEntityConverter, pocoToEntityConverter)
+        {
+        }
+
+        public GenericJsGridController(
+            Func<IEnumerable<TEntity>, TEntity, IEnumerable<TEntity>> filter,
+            object validationDefinition,
+            IJsGridStorage<TEntity> storage,
+            Func<TReadable, TEntity> pocoToEntityConverter,
+            Func<TEntity, TReadable> entityToPocoConverter,
+            Func<TUpdateable, TEntity> editableToEntityConverter)
+            : base(false, filter, validationDefinition, storage, pocoToEntityConverter, entityToPocoConverter, editableToEntityConverter, pocoToEntityConverter, pocoToEntityConverter)
+        {
+        }
+    }
+
+
+    public class GenericJsGridController<TEntity, TReadable, TUpdateable, TCreatable> : GenericJsGridController<TEntity, TReadable, TUpdateable, TCreatable, TReadable>
+        where TReadable : class, IJsGridEntity, new()
+        where TEntity : class, IJsGridEntity, new()
+        where TUpdateable : class, IJsGridEntity, new()
+        where TCreatable : class, IJsGridEntity, new()
+    {
+        public GenericJsGridController(bool includeIdField,
+            Func<IEnumerable<TEntity>, TEntity, IEnumerable<TEntity>> filter,
+            object validationDefinition,
+            IJsGridStorage<TEntity> storage,
+            Func<TReadable, TEntity> pocoToEntityConverter,
+            Func<TEntity, TReadable> entityToPocoConverter,
+            Func<TUpdateable, TEntity> editableToEntityConverter,
+            Func<TCreatable, TEntity> creatableToEntityConverter)
+            : base(includeIdField, filter, validationDefinition, storage, pocoToEntityConverter, entityToPocoConverter, editableToEntityConverter, creatableToEntityConverter, pocoToEntityConverter)
+        {
+        }
+
+        public GenericJsGridController(
+            Func<IEnumerable<TEntity>, TEntity, IEnumerable<TEntity>> filter,
+            object validationDefinition,
+            IJsGridStorage<TEntity> storage,
+            Func<TReadable, TEntity> pocoToEntityConverter,
+            Func<TEntity, TReadable> entityToPocoConverter,
+            Func<TUpdateable, TEntity> editableToEntityConverter,
+            Func<TCreatable, TEntity> creatableToEntityConverter)
+            : base(false, filter, validationDefinition, storage, pocoToEntityConverter, entityToPocoConverter, editableToEntityConverter, creatableToEntityConverter, pocoToEntityConverter)
+        {
+        }
+    }
+
 
     public class GenericJsGridController<TEntity, TReadable, TUpdateable, TCreatable, TDeletable>
         : ApiController

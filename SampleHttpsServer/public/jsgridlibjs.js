@@ -39,7 +39,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
         }
     });
 
-    
+
 
     //========================END EXTENSIONS =============
 
@@ -49,8 +49,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
 
         if (gridApp.UniqueId) {
             return gridApp.UniqueId;
-        } else
-        {
+        } else {
 
             return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
                 (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
@@ -60,7 +59,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
     };
 
     var uniqueId = uuid();
-    gridApp.alert = gridApp.alert || function(o) { alert(o); };
+    gridApp.alert = gridApp.alert || function (o) { alert(o); };
     $.get(gridApp.GetSchemaAndSettings).done(function (composite) {
         console.log(composite);
         var data = composite.data;
@@ -94,7 +93,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
             }
         };
         var jsGridSetup = {
-            height: composite.settings.height,
+            height: gridApp.height || "700px",
             width: composite.settings.width,
             editing: composite.settings.editing,
             autoload: composite.settings.autoload,
@@ -116,15 +115,15 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
 
 
         jsGridSetup.fields = fields;
-        var eventsBounded ={};
+        var eventsBounded = {};
         jsGridSetup.fields.push({
             type: "control",
             modeSwitchButton: false,
             editButton: true,
             headerTemplate: function () {
-                return $("<button>").attr("type", "button").text(gridApp.CreateDialogTitle||"Add new")
+                return $("<button>").attr("type", "button").text(gridApp.CreateDialogTitle || "Add new")
                     .on("click", function () {
-                        gridApp. showDetailsDialog(  "Add", {},gridApp.CreateDialogTitle || "Add new");
+                        gridApp.showDetailsDialog("Add", {}, gridApp.CreateDialogTitle || "Add new");
                     });
             },
             itemTemplate: function (value, item) {
@@ -133,19 +132,19 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
                 gridApp.RowOperations = gridApp.RowOperations || [];
                 for (var i = 0; i < gridApp.RowOperations.length; i++) {
                     var gop = gridApp.RowOperations[i];
-                    var id = "jsgridrowoperation-" + item.id+"-"+gop.id;
-                    if(!eventsBounded[id]){
-                        (function (g, thisitem,theid) {
+                    var id = "jsgridrowoperation-" + item.id + "-" + gop.id;
+                    if (!eventsBounded[id]) {
+                        (function (g, thisitem, theid) {
                             $('body').on(g.event || "click",
                                 "#" + theid,
-                                function(e) {
+                                function (e) {
                                     e.stopPropagation();
                                     g.handler && g.handler(thisitem, e);
                                 });
                         })(gop, item, id);
-                        eventsBounded[id]=true;
+                        eventsBounded[id] = true;
                     }
-                     
+
                     temp += `<li><a style="cursor:pointer" class="dropdown-toggle" id="` + id + `" >` + gop.display + `</a></li>`;
                 }
                 //var $text = $("<p>").text(item.id);
@@ -154,26 +153,26 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
                 var el = $(`
                             <div class="btn-group">
                                 <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                                `+( gridApp.RowOperationsName||"Run")+` <span class="caret"></span></button>
+                                `+ (gridApp.RowOperationsName || "Run") + ` <span class="caret"></span></button>
                                 <ul class="dropdown-menu pull-right" role="menu">
-                                `+temp+`
+                                `+ temp + `
                                 </ul>
                             </div>
                         `);
                 return el;
             },
-/*
-            itemTemplate: function (value, item) {
-                var $thisGrid = this._grid._container.context.id;
-                return this._createGridButton("my-button-class", "Click to Perform Custom Action", function (grid,e) {
-                    e.stopPropagation();
-                     $('#' + $thisGrid + ' .' + this.jsGrid.ControlField.prototype.insertModeButtonClass).trigger('click');
-                    gridApp.alert(item.id);
-                    return true;
-                    // grid.editItem(item);
-                });
-            }
- */
+            /*
+                        itemTemplate: function (value, item) {
+                            var $thisGrid = this._grid._container.context.id;
+                            return this._createGridButton("my-button-class", "Click to Perform Custom Action", function (grid,e) {
+                                e.stopPropagation();
+                                 $('#' + $thisGrid + ' .' + this.jsGrid.ControlField.prototype.insertModeButtonClass).trigger('click');
+                                gridApp.alert(item.id);
+                                return true;
+                                // grid.editItem(item);
+                            });
+                        }
+             */
         });
         //jsGridSetup.fields.push({
         //    type: "date",
@@ -203,7 +202,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
                         $(jsGridRef).jsGrid("loadData");
                         return;
                     }
-                } 
+                }
 
                 var deferred = jQuery.Deferred();
                 $.ajax({
@@ -226,7 +225,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
                         $(jsGridRef).jsGrid("loadData");
                         return;
                     }
-                } 
+                }
                 var deferred = jQuery.Deferred();
                 $.ajax({
                     type: "POST",
@@ -239,11 +238,11 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
                 return deferred.promise();
             },
 
-            
+
             onItemUpdating: function (args) {
                 // cancel update of the item with empty 'name' field
-               
-                
+
+
             },
             onItemUpdated: function (args) {
                 console.log(args);
@@ -265,7 +264,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
             console.log(messages);
         };
 
-        gridApp.deleteItem= function(item) {
+        gridApp.deleteItem = function (item) {
             var deferred = jQuery.Deferred();
             if (gridApp.GetValidationError) {
                 var error = gridApp.GetValidationError(item);
@@ -337,7 +336,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
                                       <form id='detailsForm` + `-` + uniqueId + `'>
                                          ` + dat + `
                                           <div class='details-form-field'>
-                                              <button `+ (gridApp.SaveButtonAttribute || ``) + `  id='save` + `-` + uniqueId + `'>` + (gridApp.SaveButtonName || "Save Changes")+`</button>
+                                              <button `+ (gridApp.SaveButtonAttribute || ``) + `  id='save` + `-` + uniqueId + `'>` + (gridApp.SaveButtonName || "Save Changes") + `</button>
                                           </div>
                                       </form>
                                   </div>
@@ -369,7 +368,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
 
         var formSubmitHandler = $.noop;
 
-        gridApp.  showDetailsDialog=function(dialogType, client,title) {
+        gridApp.showDetailsDialog = function (dialogType, client, title) {
 
 
             forEachFieldUpdateable(function (e) {
@@ -388,7 +387,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
                 saveClient(client, dialogType === "Add");
             };
 
-            $("#detailsDialog" + `-` + uniqueId).dialog("option", "title",  title)
+            $("#detailsDialog" + `-` + uniqueId).dialog("option", "title", title)
                 .dialog("open");
         };
 
