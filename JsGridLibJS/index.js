@@ -59,6 +59,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
     };
 
     var uniqueId = uuid();
+    var selectedItems = [];
     gridApp.alert = gridApp.alert || function (o) { alert(o); };
     $.get(gridApp.GetSchemaAndSettings).done(function (composite) {
         console.log(composite);
@@ -93,12 +94,12 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
             }
         };
         var jsGridSetup = {
-            height: gridApp.height || "700px",
+            height: gridApp.height,
             width: composite.settings.width,
             editing: composite.settings.editing,
             autoload: composite.settings.autoload,
             paging: composite.settings.paging,
-            sorting: true,
+            sorting: false,
 
             //searchModeButtonTooltip: "Switch to searching", // tooltip of switching filtering/inserting button in inserting mode
             //insertModeButtonTooltip: "Switch to inserting", // tooltip of switching filtering/inserting button in filtering mode
@@ -112,10 +113,85 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
 
 
         };
+        var deleteClientsFromDb = function (deletingClients) {
+            db.clients = $.map(db.clients, function (client) {
+                return ($.inArray(client, deletingClients) > -1) ? null : client;
+            });
+        };
+        var deleteSelectedItems = function () {
+            if (!selectedItems.length || !confirm("Are you sure?"))
+                return;
 
+            var $grid = $("#jsGrid");
+            $grid.jsGrid("option", "pageIndex", 1);
+            $grid.jsGrid("loadData");
 
-        jsGridSetup.fields = fields;
-        var eventsBounded = {};
+            selectedItems = [];
+        };
+
+        // var jsGridSetup = {};
+        jsGridSetup.fields = [];
+        jsGridSetup.fields.push({
+            headerTemplate: function () {
+
+                return operarionFactory("BatchOperations", {}, "position: relative;");
+            },
+            itemTemplate: function (_, item) {
+                return $("<input>").attr("type", "checkbox")
+                    .prop("checked", $.inArray(item, selectedItems) > -1)
+                    .on("change", function () {
+                        $(this).is(":checked") ? selectItem(item) : unselectItem(item);
+                    });
+            },
+            align: "center",
+            width: 50
+        });
+
+        var operarionFactory = function (name, item, appendToStyle) {
+            appendToStyle = appendToStyle || "";
+            item = item || {};
+            item.id = item.id || uniqueId;
+            var temp = "";
+            gridApp[name] = gridApp[name] || [];
+            for (var i = 0; i < gridApp[name].length; i++) {
+                var gop = gridApp[name][i];
+                var id = "jsgridrowoperation-" + item.id + "-" + gop.id;
+                if (!eventsBounded[id]) {
+                    (function (g, thisitem, theid) {
+                        $('body').on(g.event || "click",
+                            "#" + theid,
+                            function (e) {
+                                e.stopPropagation();
+                                g.handler && g.handler(thisitem, e, selectedItems);
+                            });
+                    })(gop, item, id);
+                    eventsBounded[id] = true;
+                }
+
+                temp += `<li><a style="cursor:pointer" class="dropdown-toggle" id="` +
+                    id +
+                    `" >` +
+                    gop.display +
+                    `</a></li>`;
+            }
+            //var $text = $("<p>").text(item.id);
+            //var $link = $("<a>").attr("href", item.id).text("Go To Item");
+            //return $("<div>").append($text).append($link);
+            var el = $(`
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                                ` +
+                (gridApp[name + "Name"] || "Run") +
+                ` <span class="caret"></span></button>
+                                <ul class="dropdown-menu pull-right" role="menu" style="z-index:999 !important;    right: auto; left: auto; `+ appendToStyle + ` ">
+                                ` +
+                temp +
+                `
+                                </ul>
+                            </div>
+                        `);
+            return el;
+        };
         jsGridSetup.fields.push({
             type: "control",
             modeSwitchButton: false,
@@ -127,39 +203,7 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
                     });
             },
             itemTemplate: function (value, item) {
-
-                var temp = "";
-                gridApp.RowOperations = gridApp.RowOperations || [];
-                for (var i = 0; i < gridApp.RowOperations.length; i++) {
-                    var gop = gridApp.RowOperations[i];
-                    var id = "jsgridrowoperation-" + item.id + "-" + gop.id;
-                    if (!eventsBounded[id]) {
-                        (function (g, thisitem, theid) {
-                            $('body').on(g.event || "click",
-                                "#" + theid,
-                                function (e) {
-                                    e.stopPropagation();
-                                    g.handler && g.handler(thisitem, e);
-                                });
-                        })(gop, item, id);
-                        eventsBounded[id] = true;
-                    }
-
-                    temp += `<li><a style="cursor:pointer" class="dropdown-toggle" id="` + id + `" >` + gop.display + `</a></li>`;
-                }
-                //var $text = $("<p>").text(item.id);
-                //var $link = $("<a>").attr("href", item.id).text("Go To Item");
-                //return $("<div>").append($text).append($link);
-                var el = $(`
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                                `+ (gridApp.RowOperationsName || "Run") + ` <span class="caret"></span></button>
-                                <ul class="dropdown-menu pull-right" role="menu">
-                                `+ temp + `
-                                </ul>
-                            </div>
-                        `);
-                return el;
+                return operarionFactory("RowOperations", item);
             },
             /*
                         itemTemplate: function (value, item) {
@@ -174,6 +218,9 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
                         }
              */
         });
+        jsGridSetup.fields = jsGridSetup.fields.concat(fields);
+        var eventsBounded = {};
+
         //jsGridSetup.fields.push({
         //    type: "date",
         //    modeSwitchButton: false,
@@ -216,7 +263,6 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
                 return deferred.promise();
 
             },
-
             updateItem: function (item) {
                 if (gridApp.GetValidationError) {
                     var error = gridApp.GetValidationError(item);
@@ -237,8 +283,6 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
                 });
                 return deferred.promise();
             },
-
-
             onItemUpdating: function (args) {
                 // cancel update of the item with empty 'name' field
 
@@ -246,9 +290,13 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
             },
             onItemUpdated: function (args) {
                 console.log(args);
-            }
-        },
-            jsGridSetup.rowClass = function (item, itemIndex) { };
+            },
+
+        };
+
+        jsGridSetup.headerRowRenderer = gridApp.headerRowRenderer;
+        jsGridSetup.rowRenderer = gridApp.rowRenderer;
+        jsGridSetup.rowClass = function (item, itemIndex) { };
         jsGridSetup.rowClick = function (args) {
             //showDetailsDialog("Edit", args.item,  gridApp.UpdateDialogTitle || "Edit");
         };
@@ -294,6 +342,18 @@ var gridAppBuilder = function (jsGridRef, gridApp) {
             hide: function () {
                 console.log("loading finished");
             }
+        };
+
+
+
+        var selectItem = function (item) {
+            selectedItems.push(item);
+        };
+
+        var unselectItem = function (item) {
+            selectedItems = $.grep(selectedItems, function (i) {
+                return i !== item;
+            });
         };
         $(jsGridRef).jsGrid(jsGridSetup);
 

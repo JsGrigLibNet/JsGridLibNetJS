@@ -13,9 +13,9 @@
 </head>
 
 <body>
-  
-    <div id="jsGrid"></div>
     <div class="pagerContainer"></div>
+    <div id="jsGrid"></div>
+<div class="pagerContainer"></div>
     <script src="lib/jquery-1.10.2.js"></script>
     <script src="lib/jsgrid.js"></script>
     <script src="lib/jquery.validate.min.js"></script>
@@ -37,13 +37,13 @@
         gridApp.UpdateDialogTitle = "";
         gridApp.SaveButtonName = "Save Changes";
         gridApp.SaveButtonAttribute = "class='btn btn-primary'";
-       
+
         gridApp.RowOperationsName = "";
-        gridApp.alert = function(o) { alert(o); };
+        gridApp.alert = function (o) { alert(o); };
         gridApp.RowOperations = [
             {
                 id: "Edit",
-                display:"Edit",
+                display: "Edit",
                 handler: function (item, e) {
                     gridApp.showDetailsDialog("Edit", item, gridApp.UpdateDialogTitle || "Edit");
                 }
@@ -68,10 +68,55 @@
                 }
             }
         ];
-        gridApp.GetValidationError = function(item) {
+        gridApp.BatchOperations = [
+            {
+                id: "DeleteItem",
+                display: "Delete selected Item(s)",
+                handler: function (item, e, selectedItems) {
+                    if (window.confirm(
+                        "Data will be deleted and may be IRREVERSIBLE!. Are you sure you want to do this ?")) {
+                        for (var i = 0; i < selectedItems.length; i++) {
+                            gridApp.deleteItem(selectedItems[i]);
+                        }
+                    
+                    } else {
+                        $("#jsGrid").jsGrid("cancelEdit");
+                    }
+                }
+            },
+            {
+                display: "Open google",
+                id: "OpenGoogle",
+                handler: function (item, e) {
+                    window.location.href = "http://www.google.com";
+                }
+            }
+        ];
+        gridApp.GetValidationError = function (item) {
             if (!item.position) {
                 return "Unable to perform update. Please supply a position";
             }
+        };
+
+        gridApp.rowRenderers= function (item) {
+
+            return $(`
+<div style="float:left; margin:20px;">
+<div class="xs-product-widget media"> 
+<a class="xs_product_img_link" href="https://wp.xpeedstudio.com/marketo/product/mini-game-controller/"> 
+<img class="d-flex lazyloaded" src="https://wp.xpeedstudio.com/marketo/wp-content/uploads/2018/05/46-125x142.png" data-lazy-src="https://wp.xpeedstudio.com/marketo/wp-content/uploads/2018/05/46-125x142.png" alt="Mini Game Controller" data-was-processed="true">
+
+</a>
+<div class="media-body align-self-center product-widget-content"><div class="xs-product-header media xs-wishlist woocommerce">
+<div class="star-rating">
+<span style="width:80%">Rated <strong class="rating">4.00</strong> out of 5</span>
+</div><div class="yith-wcwl-add-to-wishlist add-to-wishlist-1332">
+<div class="yith-wcwl-add-button show" style="display:block"> <a href="/marketo/?add_to_wishlist=1332" rel="nofollow" data-product-id="1332" data-product-type="variable" class="add_to_wishlist"> </a> <img src="https://wp.xpeedstudio.com/marketo/wp-content/plugins/yith-woocommerce-wishlist/assets/images/wpspin_light.gif" data-lazy-src="https://wp.xpeedstudio.com/marketo/wp-content/plugins/yith-woocommerce-wishlist/assets/images/wpspin_light.gif" class="ajax-loading lazyloaded" alt="loading" width="16" height="16" style="visibility:hidden" data-was-processed="true"><noscript><img src="https://wp.xpeedstudio.com/marketo/wp-content/plugins/yith-woocommerce-wishlist/assets/images/wpspin_light.gif" class="ajax-loading" alt="loading" width="16" height="16" style="visibility:hidden" /></noscript></div><div class="yith-wcwl-wishlistaddedbrowse hide" style="display:none;"> <span class="feedback">Product added!</span> <a href="https://wp.xpeedstudio.com/marketo/wishlist/" rel="nofollow"> Browse Wishlist </a></div><div class="yith-wcwl-wishlistexistsbrowse hide" style="display:none"> <span class="feedback">The product is already in the wishlist!</span> <a href="https://wp.xpeedstudio.com/marketo/wishlist/" rel="nofollow"> Browse Wishlist </a></div><div style="clear:both"></div><div class="yith-wcwl-wishlistaddresponse"></div></div><div class="clear"></div></div><h4 class="product-title"><a href="https://wp.xpeedstudio.com/marketo/product/mini-game-controller/">Mini Game Controller</a></h4> <span class="price"> <span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>500.00</span> </span></div></div></div>
+                  `);
+        };
+
+        gridApp.headerRowRenderers= function(item) {
+            return "<h3>Select from your favorite brands</h3>";
         };
         gridApp.height = "700px";
         gridAppBuilder("#jsGrid", gridApp);
