@@ -39,9 +39,16 @@ var gridAppBuilder = function (page, gridElement) {
             dataSource: data(page),
             allowReordering: true,
             allowResizing: true,
+
+            beginEdit: function (args) {
+                args.row.classList.add('e-dlgeditrow');
+            },
             actionComplete: function (e) {
                 if (e.requestType == 'save') {
                     grid.refresh();
+                }
+                if (e.requestType == 'beginEdit' || e.requestType == 'add') {
+                    e.form.querySelector("tr").remove(); // in this sample check box is in first row 
                 }
             },
             contextMenuItems: ['AutoFit', 'AutoFitAll', 'SortAscending', 'SortDescending',
@@ -94,6 +101,8 @@ var gridAppBuilder = function (page, gridElement) {
             ],
 
             actionBegin: actionBegin,
+            //https://ej2.syncfusion.com/javascript/documentation/grid/columns/?no-cache=1&_ga=2.240296455.500114582.1549739902-2018847989.1549546969#auto-generation
+            //https://stackblitz.com/edit/h7qscj-ztdpkr?file=index.js
             columns: col,
 
             toolbarClick: function (args) {
@@ -210,8 +219,43 @@ var gridAppBuilder = function (page, gridElement) {
             };
         }
         // dropDownType.appendTo('#newRowPosition');
-    });
 
+
+
+
+
+        //inline on pencil click, dialogue on double click
+        /*
+           var dbClick = true;
+            grid.on('dblclick', function() {
+                 dbClick = true;
+            });
+        
+            var dialogRenderer = new grid.editModule.renderer.editType.Dialog(grid, grid.serviceLocator);
+        
+            grid.editModule.renderer = ej.base.extend(grid.editModule.renderer, {
+                update: function (args) {
+                    if (dbClick) {
+        
+                        dialogRenderer.update(this.getEditElements(args), args);
+        
+                        this.parent.setProperties({
+                            editSettings: { mode: 'Dialog' }
+                        }, true);
+        
+                    } else {
+                        this.renderer.update(this.getEditElements(args), args);
+                        this.parent.setProperties({
+                            editSettings: { mode: 'Normal' }
+                        }, true);
+                    }
+                     dbClick = false;
+                    this.convertWidget(args);
+                }
+            });
+        
+         */
+    });
 
 
 };
