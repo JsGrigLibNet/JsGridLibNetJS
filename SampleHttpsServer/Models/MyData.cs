@@ -15,5 +15,7 @@
         public bool Married { get; set; }
 
         public string Id { get; set; }
+
+        public string IdForeign { get; set; }
     }
 }

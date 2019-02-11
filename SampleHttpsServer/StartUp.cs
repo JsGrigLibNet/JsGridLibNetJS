@@ -40,16 +40,22 @@ namespace SampleHttpsServer
         {
             var config = new HttpConfiguration();
             config.Services.Replace(typeof(IHttpControllerTypeResolver), new ControllerResolver());
-
             
-
             config.MapHttpAttributeRoutes();
             config.Routes.IgnoreRoute("elmah", "{resource}.axd/{*pathInfo}");
+            
+            config.Routes.MapHttpRoute(
+                "DefaultApi post",
+                "api/{controller}/{id}",
+                new { id = RouteParameter.Optional }
+            );
+          
             config.Routes.MapHttpRoute(
                 "DefaultApi",
                 "api/{controller}/{action}/{id}",
                 new { id = RouteParameter.Optional }
             );
+
             config.Routes.MapHttpRoute("FilesRoute", "{*pathInfo}", null, null, new StopRoutingHandler());
 
             config.Formatters.Remove(config.Formatters.XmlFormatter);
@@ -58,7 +64,7 @@ namespace SampleHttpsServer
             jsonFormatter.UseDataContractJsonSerializer = false; // defaults to false, but no harm done
             jsonFormatter.SerializerSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
             jsonFormatter.SerializerSettings.Formatting = Formatting.None;
-            jsonFormatter.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+           // jsonFormatter.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
 
             app.UseWebApi(config);
         }

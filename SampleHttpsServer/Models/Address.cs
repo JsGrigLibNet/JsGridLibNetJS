@@ -9,5 +9,7 @@
         public string EmployeeContect { get; set; }
 
         public string Id { get; set; }
+
+        public string IdForeign { get; set; }
     }
 }

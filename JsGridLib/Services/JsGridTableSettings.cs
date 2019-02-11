@@ -4,47 +4,47 @@
 
     public class JsGridTableSettings
     {
-        public JsGridTableSettings()
-        {
-            this.insertRowLocation = "bottom";
-            this.width = "100%"; //"auto";
-            this.height = "500px"; //"auto";
-            this.autoload = true;
-            this.heading = true;
-            this.filtering = true;
-            this.inserting = true;
-            this.editing = true;
-            this.selecting = true;
-            this.sorting = true;
-            this.paging = true;
-            this.pageLoading = true;
-            this.noDataContent = "Not found";
-            this.confirmDeleting = true;
-            this.deleteConfirm = "Are you sure?";
-            this.pagerContainer = null;
-            this.pageIndex = 1;
-            this.pageSize = 20;
-            this.pageButtonCount = 5;
-            this.pagerFormat = "Pages : {first} {prev} {pages} {next} {last} &nbsp;&nbsp; {pageIndex} of {pageCount}";
-            this.pagePrevText = "Prev";
-            this.pageNextText = "Next";
-            this.pageFirstText = "First";
-            this.pageLastText = "Last";
-            this.pageNavigatorNextText = "...";
-            this.pageNavigatorPrevText = "...";
-            this.invalidMessage = "Invalid data entered!";
-            this.loadIndication = true;
-            this.loadIndicationDelay = 500;
-            this.loadMessage = "Please; wait...";
-            this.loadShading = true;
-            this.updateOnResize = true;
-            this.rowRenderer = null;
-            this.headerRowRenderer = null;
-            this.filterRowRenderer = null;
-            this.insertRowRenderer = null;
-            this.editRowRenderer = null;
-            this.pagerRenderer = null;
-        }
+        //public JsGridTableSettings()
+        //{
+        //    this.insertRowLocation = "bottom";
+        //    this.width = "100%"; //"auto";
+        //    this.height = "500px"; //"auto";
+        //    this.autoload = true;
+        //    this.heading = true;
+        //    this.filtering = true;
+        //    this.inserting = true;
+        //    this.editing = true;
+        //    this.selecting = true;
+        //    this.sorting = true;
+        //    this.paging = true;
+        //    this.pageLoading = true;
+        //    this.noDataContent = "Not found";
+        //    this.confirmDeleting = true;
+        //    this.deleteConfirm = "Are you sure?";
+        //    this.pagerContainer = null;
+        //    this.pageIndex = 1;
+        //    this.pageSize = 20;
+        //    this.pageButtonCount = 5;
+        //    this.pagerFormat = "Pages : {first} {prev} {pages} {next} {last} &nbsp;&nbsp; {pageIndex} of {pageCount}";
+        //    this.pagePrevText = "Prev";
+        //    this.pageNextText = "Next";
+        //    this.pageFirstText = "First";
+        //    this.pageLastText = "Last";
+        //    this.pageNavigatorNextText = "...";
+        //    this.pageNavigatorPrevText = "...";
+        //    this.invalidMessage = "Invalid data entered!";
+        //    this.loadIndication = true;
+        //    this.loadIndicationDelay = 500;
+        //    this.loadMessage = "Please; wait...";
+        //    this.loadShading = true;
+        //    this.updateOnResize = true;
+        //    this.rowRenderer = null;
+        //    this.headerRowRenderer = null;
+        //    this.filterRowRenderer = null;
+        //    this.insertRowRenderer = null;
+        //    this.editRowRenderer = null;
+        //    this.pagerRenderer = null;
+        //}
 
         public string insertRowLocation { set; get; } // "bottom";
 

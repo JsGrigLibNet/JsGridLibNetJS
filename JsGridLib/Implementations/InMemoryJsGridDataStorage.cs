@@ -40,11 +40,11 @@
 
         public void Save(T client)
         {
-            client.Id = Guid.NewGuid().ToString();
+            client.Id = Guid.NewGuid().ToString().Replace("-", "");
             this.db.Add(client);
         }
 
-        public void Delete(string id, T client)
+        public void Delete(string id)
         {
             for (int i = 0; i < this.db.Count; i++)
                 if (this.db[i].Id == id)

@@ -37,49 +37,59 @@
                         string title = Regex.Replace(x.PropertyName, @"\p{Lu}", m => "\t" + m.Value).Trim();
                         string urlRouteName = title.ToLower();
                         urlRouteName = title.Replace("\t", "");
-                        var schemaItem = new JsGridField
-                        {
-                            UIRoute = x.PropertyName,
-                            Title = title,
-                            ClientType = x.ClientType,
-                            Name = x.PropertyName.ToCamelCase(),
-                            DefaultValues = x.DefaultValues,
-                            OriginalType = x.OriginalType,
-                            PropertyValue = x.PropertyValue,
-                            ValueField = x.ValueField,
-                            TextField = x.TextField,
-                            Type = x.Type,
-                            Width = 100,
-                            Sorting = false,
-                            Items = x.Items
-                        };
+                        var schemaItem =
+                            new JsGridField
+                            {
+                                PropertyName = x.PropertyName,
+                                isPrimaryKey = x.PropertyName == "Id",
+                                visible = x.PropertyName != "Id" && x.PropertyName != "IdForeign",
+                                displayAsCheckBox = x.displayAsCheckBox,
+                                UIRoute = x.PropertyName,
+                                Title = title,
+                                ClientType = x.ClientType,
+                                field = x.PropertyName, //.ToCamelCase(),
+                                DefaultValues = x.DefaultValues,
+                                OriginalType = x.OriginalType,
+                                PropertyValue = x.PropertyValue,
+                                ValueField = x.ValueField,
+                                TextField = x.TextField,
+                                editType = x.editType,
+                                width = 100,
+                                Sorting = false,
+                                Items = x.Items
+                            };
 
                         if (schemaItem.DefaultValues != null && schemaItem.DefaultValues.Count > 0)
                         {
                             var obj = new Dictionary<string, List<string>>();
-                            obj[schemaItem.Name] = schemaItem.DefaultValues;
+                            obj[schemaItem.field] = schemaItem.DefaultValues;
                             clientColumnSetUp[urlRouteName] = obj;
                         }
                         else
                         {
-                            clientColumnSetUp[urlRouteName] = schemaItem.Name;
+                            clientColumnSetUp[urlRouteName] = schemaItem.field;
                         }
 
                         return schemaItem;
                     }).ToList();
 
-                result.Fields = schema.Where(x => includeIdfield || x.Name != "id").Select(
+                result.Fields = schema.Where(x => includeIdfield || x.field != "id" && x.field != "idforeign").Select(
                     x =>
                     {
                         dynamic data = new ExpandoObject();
-                        data.Name = x.Name;
-                        data.Type = x.Type;
-                        data.Title = x.Title;
-                        data.Sorting = x.Sorting;
-                        data.Width = x.Width;
-                        data.ValueField = x.ValueField;
-                        data.textField = x.TextField;
-                        data.Items = x.Items;
+                        data.field = x.field;
+                        data.editType = x.editType;
+                        data.headerText = x.Title;
+                        if (x.format != null)
+                            data.format = x.format;
+                        data.width = x.width;
+                        // data.ValueField = x.ValueField;
+                        // data.textField = x.TextField;
+                        // data.Items = x.Items;
+                        data.textAlign = "Left";
+                        data.isPrimaryKey = x.isPrimaryKey;
+                        data.visible = x.visible;
+                        data.displayAsCheckBox = x.displayAsCheckBox;
                         return data;
                     }).ToList();
                 //result.Fields.Add(new { Type = JsGridFieldType.Control.ToString().ToLower() });
@@ -128,7 +138,7 @@
                             DefaultValues = Enum.GetNames(info.PropertyType).ToList(),
                             OriginalType = info.PropertyType,
                             PropertyValue = PropertyValue,
-                            Type = JsGridFieldType.Select.ToString().ToLower(),
+                            editType = JsGridFieldType.Select.ToString().ToLower(),
                             ValueField = "id",
                             TextField = "name",
                             Items = Enum.GetNames(info.PropertyType).ToList().Select(
@@ -149,7 +159,7 @@
                                 PropertyName = info.Name,
                                 OriginalType = info.PropertyType,
                                 PropertyValue = PropertyValue,
-                                Type = JsGridFieldType.Select.ToString().ToLower()
+                                editType = JsGridFieldType.Select.ToString().ToLower()
                             });
                     else
                         result.Add(
@@ -159,7 +169,7 @@
                                 PropertyName = info.Name,
                                 OriginalType = info.PropertyType,
                                 PropertyValue = PropertyValue,
-                                Type = JsGridFieldType.Select.ToString().ToLower()
+                                editType = JsGridFieldType.Select.ToString().ToLower()
                             });
                 }
                 else if (info.PropertyType.Assembly == Assembly.GetExecutingAssembly())
@@ -175,7 +185,8 @@
                             PropertyName = info.Name,
                             OriginalType = info.PropertyType,
                             PropertyValue = PropertyValue,
-                            Type = JsGridFieldType.CheckBox.ToString().ToLower()
+                            editType = JsGridFieldType.booleanedit.ToString().ToLower(),
+                            displayAsCheckBox = true
                         });
                 }
                 else if (propertyName.Contains("int") || propertyName.Contains("float") || propertyName.Contains("double"))
@@ -187,7 +198,7 @@
                             PropertyName = info.Name,
                             OriginalType = info.PropertyType,
                             PropertyValue = PropertyValue,
-                            Type = JsGridFieldType.Number.ToString().ToLower()
+                            editType = JsGridFieldType.numericedit.ToString().ToLower()
                         });
                 }
                 else if (propertyName.Contains("date"))
@@ -199,7 +210,12 @@
                             PropertyName = info.Name,
                             OriginalType = info.PropertyType,
                             PropertyValue = PropertyValue,
-                            Type = JsGridFieldType.Date.ToString().ToLower()
+                            format = new
+                            {
+                                type = "dateTime",
+                                format = "M/d/y hh:mm a"
+                            },
+                            editType = JsGridFieldType.datetimepickeredit.ToString().ToLower()
                         });
                 }
                 else if (propertyName.Contains("decimal"))
@@ -211,7 +227,7 @@
                             PropertyName = info.Name,
                             OriginalType = info.PropertyType,
                             PropertyValue = PropertyValue,
-                            Type = JsGridFieldType.Number.ToString().ToLower()
+                            editType = JsGridFieldType.numericedit.ToString().ToLower()
                         });
                 }
                 else
@@ -222,8 +238,8 @@
                             ClientType = JsGridObjectTypes.String,
                             PropertyName = info.Name,
                             OriginalType = info.PropertyType,
-                            PropertyValue = PropertyValue,
-                            Type = JsGridFieldType.Text.ToString().ToLower()
+                            PropertyValue = PropertyValue
+                            //  editType = JsGridFieldType.Text.ToString().ToLower()
                         });
                 }
             }

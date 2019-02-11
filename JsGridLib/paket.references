@@ -1,2 +1,6 @@
 
 Microsoft.AspNet.WebApi
+
+Microsoft.Data.Edm
+Microsoft.Data.OData
+Microsoft.AspNet.WebApi.OData

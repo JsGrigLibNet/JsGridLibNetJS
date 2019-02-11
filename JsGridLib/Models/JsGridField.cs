@@ -6,18 +6,28 @@
 
     public class JsGridField
     {
-        public string Name { get; set; }
+        public bool displayAsCheckBox;
+        public object format;
+        public bool visible;
 
-        public string Type { get; set; }
+        public bool isPrimaryKey { set; get; }
 
-        public int? Width { get; set; }
+        public string field { get; set; }
 
+        public string editType { get; set; }
+
+        public int? width { get; set; }
+
+        [JsonIgnore]
         public string ValueField { get; set; }
 
+        [JsonIgnore]
         public string TextField { get; set; }
 
+        [JsonIgnore]
         public string Title { get; set; }
 
+        [JsonIgnore]
         public bool? Sorting { get; set; }
 
         [JsonIgnore]

@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Generic;
     using JsGridLib.Models;
-    
 
     public interface IJsGridStorage<T>
         where T : IJsGridEntity
@@ -20,6 +19,6 @@
 
         void Save(T client);
 
-        void Delete(string id, T client);
+        void Delete(string id);
     }
 }

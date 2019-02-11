@@ -1,476 +1,211 @@
 
 
-var gridAppBuilder = function (jsGridRef, gridApp) {
-    //========================extensions ========
+var gridAppBuilder = function (page, gridElement) {
+    var ele = document.getElementById('container');
+    if (ele) {
+        ele.style.visibility = "visible";
+    }
+    gridElement = gridElement || '#Grid';
+ //var page = "Orders";
 
-    var MyDateField = function (config) {
-        jsGrid.Field.call(this, config);
+    //var hostUrl = 'https://ej2services.syncfusion.com/production/web-services/';
+    var hostUrl = '';
+    var data = function (tpe) {
+        return new ej.data.DataManager({
+            url: hostUrl + 'api/' + tpe,
+            adaptor: new ej.data.WebApiAdaptor(),
+            crossDomain: true,
+            //offline:true
+        });
     };
-
-    MyDateField.prototype = new jsGrid.Field({
-
-        css: "date-field",            // redefine general property 'css'
-        align: "center",              // redefine general property 'align'
-
-        myCustomProperty: "foo",      // custom property
-
-        sorter: function (date1, date2) {
-            return new Date(date1) - new Date(date2);
-        },
-
-        itemTemplate: function (value) {
-            return new Date(value).toDateString();
-        },
-
-        insertTemplate: function (value) {
-            return this._insertPicker = $("<input>").datepicker({ defaultDate: new Date() });
-        },
-
-        editTemplate: function (value) {
-            return this._editPicker = $("<input>").datepicker().datepicker("setDate", new Date(value));
-        },
-
-        insertValue: function () {
-            return this._insertPicker.datepicker("getDate").toISOString();
-        },
-
-        editValue: function () {
-            return this._editPicker.datepicker("getDate").toISOString();
-        }
-    });
-
-
-
-    //========================END EXTENSIONS =============
-
-    jsGrid.fields.date = MyDateField;
-
-    var uuid = function () {
-
-        if (gridApp.UniqueId) {
-            return gridApp.UniqueId;
-        } else {
-
-            return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-                (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-            );
-        }
-
-    };
-
-    var uniqueId = uuid();
-    var selectedItems = [];
-    gridApp.alert = gridApp.alert || function (o) { alert(o); };
-    $.get(gridApp.GetSchemaAndSettings).done(function (composite) {
+    
+    $.get("api/" + page + "Schema/Get?id=0").done(function (composite) {
         console.log(composite);
-        var data = composite.data;
+        var col = [{ type: 'checkbox', allowFiltering: false, allowSorting: false, width: '60' }];
+        col = col.concat(composite.FieldsReadable);
+        col.push({
+            headerText: 'Actions', width: 160,
+            commands: [{ type: 'Edit', buttonOption: { iconCss: ' e-icons e-edit', cssClass: 'e-flat' } },
+            { type: 'Delete', buttonOption: { iconCss: 'e-icons e-delete', cssClass: 'e-flat' } },
+            { type: 'Save', buttonOption: { iconCss: 'e-icons e-update', cssClass: 'e-flat' } },
+            { type: 'Cancel', buttonOption: { iconCss: 'e-icons e-cancel-icon', cssClass: 'e-flat' } }]
+        });
+        //headerTemplate: '#employeetemplate'
+        //    rowTemplate: '#rowtemplate',
+        //https://ej2.syncfusion.com/demos/#/material/grid/grid-overview.html
+        var grid = new ej.grids.Grid({
+            // rowTemplate: "#hello", 
+            dataSource: data(page),
+            allowReordering: true,
+            allowResizing: true,
+            contextMenuItems: ['AutoFit', 'AutoFitAll', 'SortAscending', 'SortDescending',
+                'Copy', 'Edit', 'Delete', 'Save', 'Cancel',
+                'PdfExport', 'ExcelExport', 'CsvExport', 'FirstPage', 'PrevPage',
+                'LastPage', 'NextPage'],
+            allowExcelExport: true,
+            allowPdfExport: true,
+            selectionSettings: { type: 'Multiple' },
+            allowTextWrap: true,
+            allowRowDragAndDrop: true,
+            groupSettings: { showGroupedColumn: true },
+            showColumnMenu: true,
+            //Default,none, Both, Horizontal,Vertical
+            gridLines: 'Default',
+            hierarchyPrintMode: 'All',
+            allowSorting: true,
+            allowFiltering: true,
+            filterSettings: { type: 'Excel'/*or Menu */ },
+            //allowCsvExport: true,
+            editSettings: {
+                allowEditing: true,
+                allowAdding: true,
+                allowDeleting: true,
+                //mode: 'Normal',
+                newRowPosition: 'Top',
+                //remove this to edit inline
+                mode: 'Dialog',
+                showDeleteConfirmDialog: true
+            },
+            allowPaging: true,
+            pageSettings: {
+                pageSize: 12,
+                pageSizes: true,
+                enableQueryString: true,
+                currentPage: parseInt((function (name) {
+                    var url = window.location.href;
+                    name = name.replace(/[\[\]]/g, '\\$&');
+                    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                        results = regex.exec(url);
+                    if (!results) return null;
+                    if (!results[2]) return '';
+                    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+                })('page'), 10) || 1
+            },
+            toolbar: ['Print', 'ExcelExport', 'PdfExport'/*, 'CsvExport' */, 'Add', 'Edit', 'Delete', 'Update', 'Cancel', 'Search',
 
-        var fields = composite.fieldsReadable;
+                { text: 'Copy', tooltipText: 'Copy', prefixIcon: 'e-copy', id: 'copy' },
+                { text: 'Copy With Header', tooltipText: 'Copy With Header', prefixIcon: 'e-copy', id: 'copyHeader' }
+            ],
 
-        var forEachFieldReadable = function (f) {
-            for (let index = 0; index < composite.fieldsReadable.length; index++) {
-                var element = composite.fieldsReadable[index];
-                if (element.type !== "control") {
-                    f(element, index, composite.fieldsReadable.length);
+            actionBegin: actionBegin,
+            columns: col,
+
+            toolbarClick: function (args) {
+                if (grid.getSelectedRecords().length > 0) {
+                    var withHeader = false;
+                    if (args.item.id === 'copyHeader') {
+                        withHeader = true;
+                    }
+                    grid.copy(withHeader);
+                } else {
+                    alert("Please select row before copying");
                 }
             }
-        };
-        var forEachFieldUpdateable = function (f) {
-            for (let index = 0; index < composite.fieldsUpdateable.length; index++) {
-                var element = composite.fieldsUpdateable[index];
-                f(element, index, composite.fieldsUpdateable.length);
-            }
-        };
-        var forEachFieldDeletable = function (f) {
-            for (let index = 0; index < composite.fieldsDeletable.length; index++) {
-                var element = composite.fieldsDeletable[index];
-                f(element, index, composite.fieldsDeletable.length);
-            }
-        };
-        var forEachFieldCreatable = function (f) {
-            for (let index = 0; index < composite.fieldsCreatable.length; index++) {
-                var element = composite.fieldsCreatable[index];
-                f(element, index, composite.fieldsCreatable.length);
-            }
-        };
-        var jsGridSetup = {
-            height: gridApp.height,
-            width: composite.settings.width,
-            editing: composite.settings.editing,
-            autoload: composite.settings.autoload,
-            paging: composite.settings.paging,
-            sorting: false,
-
-            //searchModeButtonTooltip: "Switch to searching", // tooltip of switching filtering/inserting button in inserting mode
-            //insertModeButtonTooltip: "Switch to inserting", // tooltip of switching filtering/inserting button in filtering mode
-            //editButtonTooltip: "Edit item",                      // tooltip of edit item button
-            //deleteButtonTooltip: "Delete item",                  // tooltip of delete item button
-            //searchButtonTooltip: "Search",                  // tooltip of search button
-            //clearFilterButtonTooltip: "Clear filter",       // tooltip of clear filter button
-            //insertButtonTooltip: "Insert",                  // tooltip of insert button
-            //updateButtonTooltip: "Update",                  // tooltip of update item button
-            //cancelEditButtonTooltip: "Cancel edit",         // tooltip of cancel editing button
-
-
-        };
-        var deleteClientsFromDb = function (deletingClients) {
-            db.clients = $.map(db.clients, function (client) {
-                return ($.inArray(client, deletingClients) > -1) ? null : client;
-            });
-        };
-        var deleteSelectedItems = function () {
-            if (!selectedItems.length || !confirm("Are you sure?"))
-                return;
-
-            var $grid = $("#jsGrid");
-            $grid.jsGrid("option", "pageIndex", 1);
-            $grid.jsGrid("loadData");
-
-            selectedItems = [];
-        };
-
-        // var jsGridSetup = {};
-        jsGridSetup.fields = [];
-        jsGridSetup.fields.push({
-            headerTemplate: function () {
-
-                return operarionFactory("BatchOperations", {}, "position: relative;");
-            },
-            itemTemplate: function (_, item) {
-                return $("<input>").attr("type", "checkbox")
-                    .prop("checked", $.inArray(item, selectedItems) > -1)
-                    .on("change", function () {
-                        $(this).is(":checked") ? selectItem(item) : unselectItem(item);
-                    });
-            },
-            align: "center",
-            width: 50
+            //detailTemplate: '#detailtemplate',
+            //childGrid: {
+            //    dataSource: data('Orders'),
+            //    queryString: 'IdForeign',
+            //    hierarchyPrintMode: 'All',
+            //    columns: col
+            //}
         });
 
-        var operarionFactory = function (name, item, appendToStyle) {
-            appendToStyle = appendToStyle || "";
-            item = item || {};
-            item.id = item.id || uniqueId;
-            var temp = "";
-            gridApp[name] = gridApp[name] || [];
-            for (var i = 0; i < gridApp[name].length; i++) {
-                var gop = gridApp[name][i];
-                var id = "jsgridrowoperation-" + item.id + "-" + gop.id;
-                if (!eventsBounded[id]) {
-                    (function (g, thisitem, theid) {
-                        $('body').on(g.event || "click",
-                            "#" + theid,
-                            function (e) {
-                                e.stopPropagation();
-                                g.handler && g.handler(thisitem, e, selectedItems);
-                            });
-                    })(gop, item, id);
-                    eventsBounded[id] = true;
-                }
 
-                temp += `<li><a style="cursor:pointer" class="dropdown-toggle" id="` +
-                    id +
-                    `" >` +
-                    gop.display +
-                    `</a></li>`;
+        grid.appendTo(gridElement);
+        grid.toolbarClick = function (args) {
+            if (args.item.id === 'Grid_pdfexport') {
+                grid.pdfExport();
             }
-            //var $text = $("<p>").text(item.id);
-            //var $link = $("<a>").attr("href", item.id).text("Go To Item");
-            //return $("<div>").append($text).append($link);
-            var el = $(`
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                                ` +
-                (gridApp[name + "Name"] || "Run") +
-                ` <span class="caret"></span></button>
-                                <ul class="dropdown-menu pull-right" role="menu" style="z-index:999 !important;    right: auto; left: auto; `+ appendToStyle + ` ">
-                                ` +
-                temp +
-                `
-                                </ul>
-                            </div>
-                        `);
-            return el;
+            if (args.item.id === 'Grid_excelexport') {
+                // grid.excelExport();
+                grid.excelExport(getExcelExportProperties());
+            }
+            if (args.item.id === 'Grid_csvexport') {
+                grid.csvExport();
+            }
         };
-        jsGridSetup.fields.push({
-            type: "control",
-            modeSwitchButton: false,
-            editButton: true,
-            headerTemplate: function () {
-                return $("<button>").attr("type", "button").text(gridApp.CreateDialogTitle || "Add new")
-                    .on("click", function () {
-                        gridApp.showDetailsDialog("Add", {}, gridApp.CreateDialogTitle || "Add new");
-                    });
+        function actionBegin(args) {
+            if (args.requestType === 'save') {
+                if (grid.pageSettings.currentPage !== 1 && grid.editSettings.newRowPosition === 'Top') {
+                    args.index = (grid.pageSettings.currentPage * grid.pageSettings.pageSize) - grid.pageSettings.pageSize;
+                } else if (grid.editSettings.newRowPosition === 'Bottom') {
+                    args.index = (grid.pageSettings.currentPage * grid.pageSettings.pageSize) - 1;
+                }
+            }
+        }
+
+        var dropDownType = new ej.dropdowns.DropDownList({
+            dataSource: newRowPosition,
+            fields: {
+                text: 'newRowPosition',
+                value: 'id'
             },
-            itemTemplate: function (value, item) {
-                return operarionFactory("RowOperations", item);
-            },
-            /*
-                        itemTemplate: function (value, item) {
-                            var $thisGrid = this._grid._container.context.id;
-                            return this._createGridButton("my-button-class", "Click to Perform Custom Action", function (grid,e) {
-                                e.stopPropagation();
-                                 $('#' + $thisGrid + ' .' + this.jsGrid.ControlField.prototype.insertModeButtonClass).trigger('click');
-                                gridApp.alert(item.id);
-                                return true;
-                                // grid.editItem(item);
-                            });
+            value: 'Top',
+            change: function (e) {
+                var newRowPosition = e.value;
+                grid.editSettings.newRowPosition = newRowPosition;
+            }
+        });
+
+        var date = '';
+        date += ((new Date()).getMonth().toString()) + '/' + ((new Date()).getDate().toString());
+        date += '/' + ((new Date()).getFullYear().toString());
+        function getExcelExportProperties() {
+            return {
+
+                footer: {
+                    footerRows: 8,
+                    rows: [
+                        { cells: [{ colSpan: 6, value: "Thank you for your business!", style: { fontColor: '#C67878', hAlign: 'Center', bold: true } }] },
+                        { cells: [{ colSpan: 6, value: "!Visit Again!", style: { fontColor: '#C67878', hAlign: 'Center', bold: true } }] }
+                    ]
+                },
+
+                fileName: "My excel.xlsx",
+                /*
+                header: {
+                    headerRows: 7,
+                    rows: [
+                        { index: 1, cells: [{ index: 1, colSpan: 5, value: 'INVOICE', style: { fontColor: '#C25050', fontSize: 25, hAlign: 'Center', bold: true } }] },
+                        {
+                            index: 3,
+                            cells: [
+                                { index: 1, colSpan: 2, value: "Advencture Traders", style: { fontColor: '#C67878', fontSize: 15, bold: true } },
+                                { index: 4, value: "INVOICE NUMBER", style: { fontColor: '#C67878', bold: true } },
+                                { index: 5, value: "DATE", style: { fontColor: '#C67878', bold: true }, width: 150 }
+                            ]
+                        },
+                        {
+                            index: 4,
+                            cells: [{ index: 1, colSpan: 2, value: "2501 Aerial Center Parkway" },
+                            { index: 4, value: 2034 }, { index: 5, value: date, width: 150 }
+        
+                            ]
+                        },
+        
+                        {
+                            index: 5,
+                            cells: [
+                                { index: 1, colSpan: 2, value: "Tel +1 888.936.8638 Fax +1 919.573.0306" },
+                                { index: 4, value: "CUSOTMER ID", style: { fontColor: '#C67878', bold: true } }, { index: 5, value: "TERMS", width: 150, style: { fontColor: '#C67878', bold: true } }
+        
+                            ]
+                        },
+                        {
+                            index: 6,
+                            cells: [
+        
+                                { index: 4, value: 564 }, { index: 5, value: "Net 30 days", width: 150 }
+                            ]
                         }
-             */
-        });
-        jsGridSetup.fields = jsGridSetup.fields.concat(fields);
-        var eventsBounded = {};
-
-        //jsGridSetup.fields.push({
-        //    type: "date",
-        //    modeSwitchButton: false,
-        //    editButton: true
-        //});
-        jsGridSetup.pagerContainer = ".pagerContainer";
-        jsGridSetup.controller = {
-            loadData: function (filter) {
-                var deferred = jQuery.Deferred();
-                var res = $.ajax({
-                    type: "GET",
-                    url: gridApp.GetAll,
-                    data: filter
-                }).done(function (data) {
-                    deferred.resolve(data.results);
-                });
-                return deferred.promise();
-            },
-            insertItem: function (item) {
-
-                if (gridApp.GetValidationError) {
-                    var error = gridApp.GetValidationError(item);
-                    if (error) {
-                        $(jsGridRef).jsGrid("cancelEdit");
-                        gridApp.alert(error);
-                        $(jsGridRef).jsGrid("loadData");
-                        return;
-                    }
+                    ]
                 }
-
-                var deferred = jQuery.Deferred();
-                $.ajax({
-                    type: "POST",
-                    url: gridApp.Put,
-                    data: item
-                }).done(function (data) {
-                    deferred.resolve(data);
-                    $(jsGridRef).jsGrid("loadData");
-                });
-                return deferred.promise();
-
-            },
-            updateItem: function (item) {
-                if (gridApp.GetValidationError) {
-                    var error = gridApp.GetValidationError(item);
-                    if (error) {
-                        gridApp.alert(error);
-                        $(jsGridRef).jsGrid("loadData");
-                        return;
-                    }
-                }
-                var deferred = jQuery.Deferred();
-                $.ajax({
-                    type: "POST",
-                    url: gridApp.Post,
-                    data: item
-                }).done(function (data) {
-                    deferred.resolve(data);
-                    $(jsGridRef).jsGrid("loadData");
-                });
-                return deferred.promise();
-            },
-            onItemUpdating: function (args) {
-                // cancel update of the item with empty 'name' field
-
-
-            },
-            onItemUpdated: function (args) {
-                console.log(args);
-            },
-
-        };
-
-        jsGridSetup.headerRowRenderer = gridApp.headerRowRenderer;
-        jsGridSetup.rowRenderer = gridApp.rowRenderer;
-        jsGridSetup.rowClass = function (item, itemIndex) { };
-        jsGridSetup.rowClick = function (args) {
-            //showDetailsDialog("Edit", args.item,  gridApp.UpdateDialogTitle || "Edit");
-        };
-        //jsGridSetup.deleteConfirm = gridApp.DeleteConfirm|| function (item) {
-        //    return "Data will be deleted and may be IRREVERSIBLE!. Are you sure you want to do this ?";
-        //};
-        jsGridSetup.rowDoubleClick = function (args) { };
-        jsGridSetup.invalidNotify = function (args) {
-            var messages = $.map(args.errors, function (error) {
-                return error.field + ": " + error.message;
-            });
-
-            console.log(messages);
-        };
-
-        gridApp.deleteItem = function (item) {
-            var deferred = jQuery.Deferred();
-            if (gridApp.GetValidationError) {
-                var error = gridApp.GetValidationError(item);
-                if (error) {
-                    gridApp.alert(error);
-                    $(jsGridRef).jsGrid("loadData");
-                    deferred.resolve({});
-                    return deferred.promise();
-                }
-            }
-
-            $.ajax({
-                type: "POST",
-                url: gridApp.Delete,
-                data: item
-            }).done(function (data) {
-                deferred.resolve(data);
-                $(jsGridRef).jsGrid("loadData");
-            });
-            return deferred.promise();
-        };
-
-        jsGridSetup.loadIndicator = {
-            show: function () {
-                console.log("loading started");
-            },
-            hide: function () {
-                console.log("loading finished");
-            }
-        };
-
-
-
-        var selectItem = function (item) {
-            selectedItems.push(item);
-        };
-
-        var unselectItem = function (item) {
-            selectedItems = $.grep(selectedItems, function (i) {
-                return i !== item;
-            });
-        };
-        $(jsGridRef).jsGrid(jsGridSetup);
-
-
-        var getDialogUI = function () {
-            var dat = "";
-            forEachFieldCreatable(function (e) {
-                if (e.type === "select") {
-
-                    var itemDom = "";
-                    for (let index = 0; index < e.items.length; index++) {
-                        const item = e.items[index];
-                        itemDom += "<option value='" + item.id + "'>" + item.name + "</option>";
-                    }
-                    dat += `
-                                     <div class='details-form-field'>
-                                              <label for='` + e.name + `'>` + e.title + `:</label>
-                                              <select id='` + e.name + `' name='` + e.name + `'>
-                                                  <option value=''>(Select)</option>
-                                                  ` + itemDom + `
-                                              </select>
-                                          </div>
-                                        `;
-
-
-                } else {
-                    dat += `
-                                         <div class='details-form-field'>
-                                              <label for='` + e.name + `'>` + e.title + `:</label>
-                                              <input id='` + e.name + `-` + uniqueId + `' name='` + e.name + `' type='` + e.type + `' />
-                                          </div>
-                                        `;
-                }
-
-            });
-
-
-            return `
-                                  <div id='detailsDialog` + `-` + uniqueId + `'>
-                                      <form id='detailsForm` + `-` + uniqueId + `'>
-                                         ` + dat + `
-                                          <div class='details-form-field'>
-                                              <button `+ (gridApp.SaveButtonAttribute || ``) + `  id='save` + `-` + uniqueId + `'>` + (gridApp.SaveButtonName || "Save Changes") + `</button>
-                                          </div>
-                                      </form>
-                                  </div>
-                      `;
-
-
-        };
-
-        $('body').prepend(getDialogUI())
-        $("#detailsDialog" + `-` + uniqueId).dialog({
-            autoOpen: false,
-            width: 400,
-            close: function () {
-                $("#detailsForm" + `-` + uniqueId).validate().resetForm();
-                $("#detailsForm" + `-` + uniqueId).find(".error").removeClass("error");
-            }
-        });
-
-        var validationObject = $.ajax({
-            type: "GET",
-            url: gridApp.GetValidation,
-            async: false
-        }).responseJSON;
-        validationObject.submitHandler = function () {
-            formSubmitHandler();
-        };
-        $("#detailsForm" + `-` + uniqueId).validate(validationObject);
-
-
-        var formSubmitHandler = $.noop;
-
-        gridApp.showDetailsDialog = function (dialogType, client, title) {
-
-
-            forEachFieldUpdateable(function (e) {
-                if (e.type === "checkbox") {
-                    $("#" + e.name + `-` + uniqueId).prop("checked", client[e.name]);
-                } else if (e.type === "date") {
-                    document.getElementById(e.name + `-` + uniqueId).valueAsDate = new Date(client[e.name]);
-                }
-                else {
-                    $("#" + e.name + `-` + uniqueId).val(client[e.name]);
-                }
-
-            });
-
-            formSubmitHandler = function () {
-                saveClient(client, dialogType === "Add");
+                */
             };
-
-            $("#detailsDialog" + `-` + uniqueId).dialog("option", "title", title)
-                .dialog("open");
-        };
-
-        function saveClient(client, isNew) {
-            var dat = {};
-            forEachFieldReadable(function (e) {
-                if (e.type === "select" || e.type === "number") {
-                    dat[e.name] = parseInt($("#" + e.name + `-` + uniqueId).val(), 10)
-                } else if (e.type === "checkbox") {
-                    dat[e.name] = $("#" + e.name + `-` + uniqueId).is(":checked")
-                } else {
-                    dat[e.name] = $("#" + e.name + `-` + uniqueId).val()
-                }
-
-            });
-
-            $.extend(client, dat);
-
-            $(jsGridRef).jsGrid(isNew ? "insertItem" : "updateItem", client);
-
-            $("#detailsDialog" + `-` + uniqueId).dialog("close");
-        };
-
+        }
+        dropDownType.appendTo('#newRowPosition');
     });
 
+
+    
 };

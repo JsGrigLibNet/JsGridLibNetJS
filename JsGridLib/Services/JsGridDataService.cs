@@ -91,9 +91,9 @@
             this.jsGridDataStorage.Save(editedClient);
         }
 
-        public void Delete(TEntity editedClient)
+        public void Delete(string id)
         {
-            this.jsGridDataStorage.Delete(editedClient.Id, editedClient);
+            this.jsGridDataStorage.Delete(id);
         }
     }
 }

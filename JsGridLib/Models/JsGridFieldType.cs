@@ -2,10 +2,10 @@
 {
     public enum JsGridFieldType
     {
-        Text,
-        Number,
+        booleanedit,
+        numericedit,
         Select,
-        CheckBox,
-        Date
+        dropdownedit,
+        datetimepickeredit
     }
 }

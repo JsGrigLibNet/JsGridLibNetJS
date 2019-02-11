@@ -1,126 +1,82 @@
 ﻿<!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <link rel="stylesheet" href="lib/jsgrid.min.css" />
-    <link rel="stylesheet" href="lib/jsgrid-theme.min.css" />
-    <link rel="stylesheet" href="lib/jquery-ui.css">
-    <link href="jquery-ui-bootstrap/assets/css/bootstrap.min.css" rel="stylesheet">
-    <link type="text/css" href="jquery-ui-bootstrap/css/custom-theme/jquery-ui-1.10.0.custom.css" rel="stylesheet" />
-    <link type="text/css" href="jquery-ui-bootstrap/assets/css/font-awesome.min.css" rel="stylesheet" />
-    <link href="jquery-ui-bootstrap/assets/css/docs.css" rel="stylesheet">
-    <link href="jquery-ui-bootstrap/assets/js/google-code-prettify/prettify.css" rel="stylesheet">
+    <title>EJ2 Grid</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Typescript Grid Control">
+    <meta name="author" content="Syncfusion">
+    <link href="index.css" rel="stylesheet">
+    <link href="editor.css" rel="stylesheet">
+    <link href="material.css" rel="stylesheet">
 </head>
-
 <body>
-    <div class="pagerContainer"></div>
-    <div id="jsGrid"></div>
-<div class="pagerContainer"></div>
-    <script src="lib/jquery-1.10.2.js"></script>
-    <script src="lib/jsgrid.js"></script>
-    <script src="lib/jquery.validate.min.js"></script>
-    <script src="lib/jquery-ui.js"></script>
-    <script src="jquery-ui-bootstrap/assets/js/bootstrap.min.js" type="text/javascript"></script>
-    <script src="jquery-ui-bootstrap/assets/js/google-code-prettify/prettify.js" type="text/javascript"></script>
-
-    <script src="jsgridlibjs.js"></script>
-    <script>
-        var gridApp = {};
-        gridApp.GetSchemaAndSettings = '/api/values/GetSchemaAndSettings';
-        gridApp.UniqueId = '1';
-        gridApp.GetAll = "/api/values/GetAll";
-        gridApp.Put = "/api/values/put";
-        gridApp.Post = "/api/values/post";
-        gridApp.Delete = "/api/values/delete";
-        gridApp.GetValidation = "/api/values/GetValidation";
-        gridApp.CreateDialogTitle = "";
-        gridApp.UpdateDialogTitle = "";
-        gridApp.SaveButtonName = "Save Changes";
-        gridApp.SaveButtonAttribute = "class='btn btn-primary'";
-
-        gridApp.RowOperationsName = "";
-        gridApp.alert = function (o) { alert(o); };
-        gridApp.RowOperations = [
-            {
-                id: "Edit",
-                display: "Edit",
-                handler: function (item, e) {
-                    gridApp.showDetailsDialog("Edit", item, gridApp.UpdateDialogTitle || "Edit");
-                }
-            },
-            {
-                id: "DeleteItem",
-                display: "Delete Item",
-                handler: function (item, e) {
-                    if (window.confirm(
-                        "Data will be deleted and may be IRREVERSIBLE!. Are you sure you want to do this ?")) {
-                        gridApp.deleteItem(item);
-                    } else {
-                        $("#jsGrid").jsGrid("cancelEdit");
-                    }
-                }
-            },
-            {
-                display: "Open google",
-                id: "OpenGoogle",
-                handler: function (item, e) {
-                    window.location.href = "http://www.google.com";
-                }
-            }
-        ];
-        gridApp.BatchOperations = [
-            {
-                id: "DeleteItem",
-                display: "Delete selected Item(s)",
-                handler: function (item, e, selectedItems) {
-                    if (window.confirm(
-                        "Data will be deleted and may be IRREVERSIBLE!. Are you sure you want to do this ?")) {
-                        for (var i = 0; i < selectedItems.length; i++) {
-                            gridApp.deleteItem(selectedItems[i]);
-                        }
-                    
-                    } else {
-                        $("#jsGrid").jsGrid("cancelEdit");
-                    }
-                }
-            },
-            {
-                display: "Open google",
-                id: "OpenGoogle",
-                handler: function (item, e) {
-                    window.location.href = "http://www.google.com";
-                }
-            }
-        ];
-        gridApp.GetValidationError = function (item) {
-            if (!item.position) {
-                return "Unable to perform update. Please supply a position";
-            }
-        };
-
-        gridApp.rowRenderers= function (item) {
-
-            return $(`
-<div style="float:left; margin:20px;">
-<div class="xs-product-widget media"> 
-<a class="xs_product_img_link" href="https://wp.xpeedstudio.com/marketo/product/mini-game-controller/"> 
-<img class="d-flex lazyloaded" src="https://wp.xpeedstudio.com/marketo/wp-content/uploads/2018/05/46-125x142.png" data-lazy-src="https://wp.xpeedstudio.com/marketo/wp-content/uploads/2018/05/46-125x142.png" alt="Mini Game Controller" data-was-processed="true">
-
-</a>
-<div class="media-body align-self-center product-widget-content"><div class="xs-product-header media xs-wishlist woocommerce">
-<div class="star-rating">
-<span style="width:80%">Rated <strong class="rating">4.00</strong> out of 5</span>
-</div><div class="yith-wcwl-add-to-wishlist add-to-wishlist-1332">
-<div class="yith-wcwl-add-button show" style="display:block"> <a href="/marketo/?add_to_wishlist=1332" rel="nofollow" data-product-id="1332" data-product-type="variable" class="add_to_wishlist"> </a> <img src="https://wp.xpeedstudio.com/marketo/wp-content/plugins/yith-woocommerce-wishlist/assets/images/wpspin_light.gif" data-lazy-src="https://wp.xpeedstudio.com/marketo/wp-content/plugins/yith-woocommerce-wishlist/assets/images/wpspin_light.gif" class="ajax-loading lazyloaded" alt="loading" width="16" height="16" style="visibility:hidden" data-was-processed="true"><noscript><img src="https://wp.xpeedstudio.com/marketo/wp-content/plugins/yith-woocommerce-wishlist/assets/images/wpspin_light.gif" class="ajax-loading" alt="loading" width="16" height="16" style="visibility:hidden" /></noscript></div><div class="yith-wcwl-wishlistaddedbrowse hide" style="display:none;"> <span class="feedback">Product added!</span> <a href="https://wp.xpeedstudio.com/marketo/wishlist/" rel="nofollow"> Browse Wishlist </a></div><div class="yith-wcwl-wishlistexistsbrowse hide" style="display:none"> <span class="feedback">The product is already in the wishlist!</span> <a href="https://wp.xpeedstudio.com/marketo/wishlist/" rel="nofollow"> Browse Wishlist </a></div><div style="clear:both"></div><div class="yith-wcwl-wishlistaddresponse"></div></div><div class="clear"></div></div><h4 class="product-title"><a href="https://wp.xpeedstudio.com/marketo/product/mini-game-controller/">Mini Game Controller</a></h4> <span class="price"> <span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>500.00</span> </span></div></div></div>
-                  `);
-        };
-
-        gridApp.headerRowRenderers= function(item) {
-            return "<h3>Select from your favorite brands</h3>";
-        };
-        gridApp.height = "700px";
-        gridAppBuilder("#jsGrid", gridApp);
+    <div id="container">
+        <div id="Grid"></div>
+    </div>
+    <div class="col-lg-8 control-section inplace-editor-control-section form-layout" id='inplace-editor-control'>
+        <div class="content-wrapper" style="margin-bottom: 25px">
+            <div id="confirmation">
+                <div id="submitDialog"></div>
+                <form id="formId" class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-6 control-label" style="text-align: left;font-size: 14px;">
+                            Title
+                        </label>
+                        <div id='inplace_title_editor' data-underline='false'></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-6 control-label" style="text-align: left;font-size: 14px;">
+                            Comments
+                        </label>
+                        <div id='inplace_comment_editor' data-underline='false'></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-6 control-label" style="text-align: left;font-size: 14px;">
+                            Tags
+                        </label>
+                        <div id='inplace_tag_editor' data-underline='false'></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 property-section">
+        <table id="property" title="Properties">
+            <tr>
+                <td>
+                    <div> Mode</div>
+                </td>
+                <td>
+                    <div>
+                        <select id="editorMode_form" class="form-control">
+                            <option value="Inline">Inline</option>
+                            <option value="Popup">Popup</option>
+                        </select>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+<script id="hello" type="text/x-jsrender">
+        <tr>
+            <td>
+                Hello ${Name} ${Id}
+            </td>
+           
+        </tr>
     </script>
-</body>
+<script id='detailtemplate' type="text/x-jsrender">
+    Hello ${ Name } ${ Id }
+</script>    
 
+    <script src="jquery-3.3.1.min.js"></script>
+    <script src="ej2.min.js" type="text/javascript"></script>
+    <script src="es5-datasource.js" type="text/javascript"></script>
+    <script src="editor.js" type="text/javascript"></script>
+    <script src="index.js" type="text/javascript"></script>
+<script>
+    gridAppBuilder('Orders');
+</script>
+</body>
 </html>
