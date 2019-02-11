@@ -33,11 +33,17 @@ var gridAppBuilder = function (page, gridElement) {
         //headerTemplate: '#employeetemplate'
         //    rowTemplate: '#rowtemplate',
         //https://ej2.syncfusion.com/demos/#/material/grid/grid-overview.html
+        //https://ej2.syncfusion.com/javascript/documentation/grid/columns/?_ga=2.243944193.500114582.1549739902-2018847989.1549546969#column-template
         var grid = new ej.grids.Grid({
             // rowTemplate: "#hello", 
             dataSource: data(page),
             allowReordering: true,
             allowResizing: true,
+            actionComplete: function (e) {
+                if (e.requestType == 'save') {
+                    grid.refresh();
+                }
+            }, 
             contextMenuItems: ['AutoFit', 'AutoFitAll', 'SortAscending', 'SortDescending',
                 'Copy', 'Edit', 'Delete', 'Save', 'Cancel',
                 'PdfExport', 'ExcelExport', 'CsvExport', 'FirstPage', 'PrevPage',
@@ -134,18 +140,18 @@ var gridAppBuilder = function (page, gridElement) {
             }
         }
 
-        var dropDownType = new ej.dropdowns.DropDownList({
-            dataSource: newRowPosition,
-            fields: {
-                text: 'newRowPosition',
-                value: 'id'
-            },
-            value: 'Top',
-            change: function (e) {
-                var newRowPosition = e.value;
-                grid.editSettings.newRowPosition = newRowPosition;
-            }
-        });
+        //var dropDownType = new ej.dropdowns.DropDownList({
+        //    dataSource: newRowPosition,
+        //    fields: {
+        //        text: 'newRowPosition',
+        //        value: 'id'
+        //    },
+        //    value: 'Top',
+        //    change: function (e) {
+        //        var newRowPosition = e.value;
+        //        grid.editSettings.newRowPosition = newRowPosition;
+        //    }
+        //});
 
         var date = '';
         date += ((new Date()).getMonth().toString()) + '/' + ((new Date()).getDate().toString());
@@ -203,7 +209,7 @@ var gridAppBuilder = function (page, gridElement) {
                 */
             };
         }
-        dropDownType.appendTo('#newRowPosition');
+       // dropDownType.appendTo('#newRowPosition');
     });
 
 
