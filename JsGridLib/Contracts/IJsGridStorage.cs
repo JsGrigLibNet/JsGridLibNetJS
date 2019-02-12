@@ -4,20 +4,20 @@
     using System.Collections.Generic;
     using JsGridLib.Models;
 
-    public interface IJsGridStorage<T>
-        where T : IJsGridEntity
+    public interface IJsGridStorage
+
     {
-        JsGridStorageStatistics<T> LoadAll(
-            T sampleForFilter,
-            Func<IEnumerable<T>, T, IEnumerable<T>> clientSideFiltering,
-            int take,
-            int skip);
+        JsGridStorageStatistics LoadAll(
+            int take = 100,
+            dynamic sampleForFilter = null,
+            Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientSideFiltering = null,
+            int skip = 0);
 
-        T LoadById(string id);
+        dynamic LoadById(string id);
 
-        void Update(string id, T client);
+        void Update(IDictionary<string, object> client);
 
-        void Save(T client);
+        void Save(IDictionary<string, object> client);
 
         void Delete(string id);
     }

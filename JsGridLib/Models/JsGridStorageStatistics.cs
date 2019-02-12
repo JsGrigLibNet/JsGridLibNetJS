@@ -2,10 +2,10 @@
 {
     using System.Collections.Generic;
 
-    public class JsGridStorageStatistics<T>
+    public class JsGridStorageStatistics
     {
         public long Total { set; get; }
 
-        public IEnumerable<T> Results { set; get; }
+        public IEnumerable<object> Results { set; get; }
     }
 }

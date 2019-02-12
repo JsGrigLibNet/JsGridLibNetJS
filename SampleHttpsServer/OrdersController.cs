@@ -2,6 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
+    using System.Dynamic;
     using System.Linq;
     using System.Net;
     using System.Net.Http;
@@ -10,33 +12,87 @@
     using JsGridLib.Controller;
     using JsGridLib.Implementations;
     using JsGridLib.Models;
-    
-    public class OrdersSchemaController : GenericJsGridSchemaController<PhoneBook> {}
-    public class OrdersController : GenericJsGridController<PhoneBook>
+
+   // public class OrdersSchemaController : GenericJsGridSchemaController<PhoneBook> {}
+    public class OrdersController : GenericJsGridController
     {
-        static InMemoryJsGridDataStorage<PhoneBook> InMemoryJsGridDataStorage = new InMemoryJsGridDataStorage<PhoneBook>();
-        public static List<Order> data = Enumerable.Range(0, 2500).Select(X =>
-        {
-            InMemoryJsGridDataStorage.Save(new PhoneBook(){Name = "my name " + X.ToString()});
-            return new Order();
-        }).ToList();
-        public OrdersController(): base((db, filter) => db.Where(c => c != null), ValidationObj.Validation,InMemoryJsGridDataStorage)
+       public OrdersController() : base((db, filter) => db, null, DbService.InMemoryJsGridDataStorage)
         {
         }
     }
+    public class OrdersSchemaController : GenericJsGridSchemaController
+    {
+        public OrdersSchemaController()
+            : base(DbService.InMemoryJsGridDataStorage.LoadAll(1).Results.FirstOrDefault())
+        {
+        }
+    }
+    //public class OrdersSchemaController : GenericJsGridSchemaController
+    //{
+    //    public OrdersSchemaController()
+    //        : base(new PhoneBook())
+    //    {
+    //    }
+    //}
+    //public class OrdersSchemaController : GenericJsGridSchemaController
+    //{
+    //    public OrdersSchemaController()
+    //        : base(new
+    //        {
+    //            Birthday = default(DateTime),
+    //            Name = "",
+    //            Id = Guid.NewGuid().ToString().Replace("-", "")
+    //        })
+    //    {
+    //    }
+    //}
+    public static class DbService
+    {
+       public static InMemoryJsGridDataStorage InMemoryJsGridDataStorage = new InMemoryJsGridDataStorage();
+        public static object data = Enumerable.Range(0, 2500).Select(X =>
+        {
+            try
+            {
+                var p = new
+                {
+                    Birthday = DateTime.UtcNow.AddDays(X),
+                    Name = "my name " + X.ToString()
+                }.ToExpandoObject();
+                InMemoryJsGridDataStorage.Save(p);
 
-    public class PhoneBook : IJsGridEntity
+            }
+            catch (Exception e)
+            {
+
+            }
+            return new object();
+        }).ToList();
+
+    }
+    public static class ExpandoExtension
+    {
+        public static ExpandoObject ToExpandoObject(this object obj)
+        {
+            IDictionary<string, object> expando = new ExpandoObject();
+
+            foreach (PropertyDescriptor property in TypeDescriptor.GetProperties(obj.GetType()))
+            {
+                expando.Add(property.Name, property.GetValue(obj));
+            }
+
+            return (ExpandoObject)expando;
+        }
+    }
+    public class PhoneBook 
     {
         public string Id { get; set; }
-
-        public string IdForeign { get; set; }
+        public DateTime Birthday  { get; set; }
 
         public string Name { get; set; }
-        public bool Done { get; set; }
 
     }
 
-    public class Order : IJsGridEntity
+    public class Order 
     {
         public Order()
         {

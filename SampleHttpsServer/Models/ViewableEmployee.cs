@@ -3,7 +3,7 @@
     using System;
     using JsGridLib.Contracts;
 
-    public class ViewableEmployee : IJsGridEntity
+    public class ViewableEmployee 
     {
         public string Id { get; set; }
 

@@ -20,11 +20,15 @@
 
     public class SchemaFactory
     {
-        public SchemaSetUp SchemaFromType<T>(bool includeIdfield)
-            where T : new()
+        public SchemaSetUp SchemaFromType<T>(bool includeIdfield, object sample = null)
+
         {
-            Type modelType = typeof(T);
-            object model = new T();
+            Type modelType = sample != null ? sample.GetType() : typeof(T);
+            object model;
+            if (sample != null)
+                model = sample;
+            else
+                model = Activator.CreateInstance<T>();
             var result = new SchemaSetUp();
 
             try
@@ -103,17 +107,25 @@
             return result;
         }
 
-        bool PropertyInfoIsACollection(PropertyInfo p)
+        public static bool IsAnonymousType(object instance)
+        {
+            if (instance == null)
+                return false;
+
+            return instance.GetType().Namespace == null;
+        }
+
+        bool PropertyInfoIsACollection(Tuple<Type, object, string> p)
         {
             Type tColl = typeof(ICollection<>);
-            Type t = p.PropertyType;
+            Type t = p.Item1;
             return t.IsGenericType && tColl.IsAssignableFrom(t.GetGenericTypeDefinition()) || t.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == tColl);
         }
 
-        bool PropertyInfoIsADictionary(PropertyInfo p)
+        bool PropertyInfoIsADictionary(Tuple<Type, object, string> p)
         {
             Type tColl = typeof(Dictionary<,>);
-            Type t = p.PropertyType;
+            Type t = p.Item1;
             return t.IsGenericType && tColl.IsAssignableFrom(t.GetGenericTypeDefinition()) || t.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == tColl);
         }
 
@@ -121,27 +133,45 @@
         {
             parentName = parentName ?? type.Name;
             var result = new List<JsGridField>();
-            PropertyInfo[] myPropertyInfo = type.GetProperties();
-            foreach (PropertyInfo info in myPropertyInfo)
-            {
-                object PropertyValue = model == null ? null : info.GetValue(model);
-                string propertyName = info.PropertyType.Name.ToLower();
 
-                if (typeof(Enum).IsAssignableFrom(info.PropertyType))
+            List<Tuple<Type, object, string>> myPropertyInfo;
+            if (type == typeof(ExpandoObject))
+                myPropertyInfo = (model as ExpandoObject ?? new ExpandoObject()).Select(
+                    x =>
+                    {
+                        Type tpe = x.Value.GetType();
+                        //var prop= tpe.GetProperty(x.Key);
+                        // return prop;
+
+                        //var t = new
+                        //{
+                        //    data=Activator.CreateInstance(tpe)
+                        //};
+                        return new Tuple<Type, object, string>(tpe, x.Value, x.Key);
+                    }).ToList();
+            else
+                myPropertyInfo = type.GetProperties().Select(x => new Tuple<Type, object, string>(x.PropertyType, x.GetValue(model), x.Name)).ToList();
+
+            foreach (Tuple<Type, object, string> info in myPropertyInfo)
+            {
+                object PropertyValue = model == null ? null : info.Item2;
+                string propertyName = info.Item1.Name.ToLower();
+
+                if (typeof(Enum).IsAssignableFrom(info.Item1))
                 {
                     int i = 0;
                     result.Add(
                         new JsGridField
                         {
                             ClientType = JsGridObjectTypes.Enum,
-                            PropertyName = info.Name,
-                            DefaultValues = Enum.GetNames(info.PropertyType).ToList(),
-                            OriginalType = info.PropertyType,
+                            PropertyName = info.Item3,
+                            DefaultValues = Enum.GetNames(info.Item1).ToList(),
+                            OriginalType = info.Item1,
                             PropertyValue = PropertyValue,
                             editType = JsGridFieldType.Select.ToString().ToLower(),
                             ValueField = "id",
                             TextField = "name",
-                            Items = Enum.GetNames(info.PropertyType).ToList().Select(
+                            Items = Enum.GetNames(info.Item1).ToList().Select(
                                 x => new DropDownItem
                                 {
                                     Name = x,
@@ -156,8 +186,8 @@
                             new JsGridField
                             {
                                 ClientType = JsGridObjectTypes.Dictionary,
-                                PropertyName = info.Name,
-                                OriginalType = info.PropertyType,
+                                PropertyName = info.Item3,
+                                OriginalType = info.Item1,
                                 PropertyValue = PropertyValue,
                                 editType = JsGridFieldType.Select.ToString().ToLower()
                             });
@@ -166,15 +196,15 @@
                             new JsGridField
                             {
                                 ClientType = JsGridObjectTypes.Array,
-                                PropertyName = info.Name,
-                                OriginalType = info.PropertyType,
+                                PropertyName = info.Item3,
+                                OriginalType = info.Item1,
                                 PropertyValue = PropertyValue,
                                 editType = JsGridFieldType.Select.ToString().ToLower()
                             });
                 }
-                else if (info.PropertyType.Assembly == Assembly.GetExecutingAssembly())
+                else if (info.Item1.Assembly == Assembly.GetExecutingAssembly())
                 {
-                    result.AddRange(this.CreateJsGridProperties(info.PropertyType, parentName + "." + info.Name, PropertyValue));
+                    result.AddRange(this.CreateJsGridProperties(info.Item1, parentName + "." + info.Item1.Name, PropertyValue));
                 }
                 else if (propertyName.Contains("bool"))
                 {
@@ -182,8 +212,8 @@
                         new JsGridField
                         {
                             ClientType = JsGridObjectTypes.Boolean,
-                            PropertyName = info.Name,
-                            OriginalType = info.PropertyType,
+                            PropertyName = info.Item3,
+                            OriginalType = info.Item1,
                             PropertyValue = PropertyValue,
                             editType = JsGridFieldType.booleanedit.ToString().ToLower(),
                             displayAsCheckBox = true
@@ -195,8 +225,8 @@
                         new JsGridField
                         {
                             ClientType = JsGridObjectTypes.Number,
-                            PropertyName = info.Name,
-                            OriginalType = info.PropertyType,
+                            PropertyName = info.Item3,
+                            OriginalType = info.Item1,
                             PropertyValue = PropertyValue,
                             editType = JsGridFieldType.numericedit.ToString().ToLower()
                         });
@@ -207,8 +237,8 @@
                         new JsGridField
                         {
                             ClientType = JsGridObjectTypes.DateTime,
-                            PropertyName = info.Name,
-                            OriginalType = info.PropertyType,
+                            PropertyName = info.Item3,
+                            OriginalType = info.Item1,
                             PropertyValue = PropertyValue,
                             format = new
                             {
@@ -224,8 +254,8 @@
                         new JsGridField
                         {
                             ClientType = JsGridObjectTypes.Money,
-                            PropertyName = info.Name,
-                            OriginalType = info.PropertyType,
+                            PropertyName = info.Item3,
+                            OriginalType = info.Item1,
                             PropertyValue = PropertyValue,
                             editType = JsGridFieldType.numericedit.ToString().ToLower()
                         });
@@ -236,8 +266,8 @@
                         new JsGridField
                         {
                             ClientType = JsGridObjectTypes.String,
-                            PropertyName = info.Name,
-                            OriginalType = info.PropertyType,
+                            PropertyName = info.Item3,
+                            OriginalType = info.Item1,
                             PropertyValue = PropertyValue
                             //  editType = JsGridFieldType.Text.ToString().ToLower()
                         });
