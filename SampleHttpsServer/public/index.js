@@ -21,10 +21,10 @@ var gridAppBuilder = function (page, gridElement) {
 
     $.get("api/" + page + "Schema/Get?id=0").done(function (composite) {
         console.log(composite);
-        var col = [{ type: 'checkbox', allowFiltering: false, allowSorting: false, width: '60' }];
+        var col = [{ type: 'checkbox', allowFiltering: false, allowSorting: false, width: '40' }];
         col = col.concat(composite.FieldsReadable);
         col.push({
-            headerText: 'Actions', width: 160,
+            headerText: 'Actions', width: 60,
             commands: [{ type: 'Edit', buttonOption: { iconCss: ' e-icons e-edit', cssClass: 'e-flat' } },
             { type: 'Delete', buttonOption: { iconCss: 'e-icons e-delete', cssClass: 'e-flat' } },
             { type: 'Save', buttonOption: { iconCss: 'e-icons e-update', cssClass: 'e-flat' } },

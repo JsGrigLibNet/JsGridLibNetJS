@@ -140,17 +140,17 @@
                     x =>
                     {
                         Type tpe = x.Value.GetType();
-                        //var prop= tpe.GetProperty(x.Key);
-                        // return prop;
-
-                        //var t = new
-                        //{
-                        //    data=Activator.CreateInstance(tpe)
-                        //};
                         return new Tuple<Type, object, string>(tpe, x.Value, x.Key);
                     }).ToList();
             else
                 myPropertyInfo = type.GetProperties().Select(x => new Tuple<Type, object, string>(x.PropertyType, x.GetValue(model), x.Name)).ToList();
+
+            if (myPropertyInfo.Count(x => x.Item3.Trim().ToLower() == "id") != 0)
+            {
+                throw new Exception($"Sample definition for grid cannot contain id");
+            }
+
+            myPropertyInfo.Add(new Tuple<Type, object, string>(typeof(string), "", "Id"));
 
             foreach (Tuple<Type, object, string> info in myPropertyInfo)
             {

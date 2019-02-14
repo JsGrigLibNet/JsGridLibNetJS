@@ -162,32 +162,32 @@
             KeyValuePair<string, string> filter = queryString.FirstOrDefault(x => x.Key == "$filter");
             FilterQueryOption cleanFilter = filter.Value == null || !filter.Value.Contains("(undefined(null,undefined))") ? opts.Filter : new FilterQueryOption(filter.Value.Replace("(undefined(null,undefined)) or ", "").Replace(" or (undefined(null,undefined))", "").Replace("(undefined(null,undefined)) and ", "").Replace(" and (undefined(null,undefined))", "").Trim(), opts.Context);
 
-            JsGridStorageStatistics all = this.Service.GetAll(this.Request, this.Filter, 100000, 0);
-            IQueryable<dynamic> emp = all.Results.ToList().AsQueryable();
+            JsGridStorageStatistics all = this.Service.GetAll(this.Request, this.Filter, opts.Top?.Value??100, opts.Skip?.Value??0);
+            //IQueryable<dynamic> emp = all.Results.ToList().AsQueryable();
 
-            long count = all.Total;
+            //long count = all.Total;
 
-            if (opts.OrderBy != null)
-                emp = opts.OrderBy.ApplyTo(emp); //perform sort
-            if (opts.Filter != null)
-                try
-                {
-                    emp = cleanFilter.ApplyTo(emp, new ODataQuerySettings()).Cast<object>();
-                }
-                catch (Exception e)
-                {
-                }
+            //if (opts.OrderBy != null)
+            //    emp = opts.OrderBy.ApplyTo(emp); //perform sort
+            //if (opts.Filter != null)
+            //    try
+            //    {
+            //        emp = cleanFilter.ApplyTo(emp, new ODataQuerySettings()).Cast<object>();
+            //    }
+            //    catch (Exception e)
+            //    {
+            //    }
 
-            if (opts.InlineCount != null)
-                count = all.Total;
-            if (opts.Skip != null)
-                emp = opts.Skip.ApplyTo(emp, new ODataQuerySettings()); //perform skip
-            if (opts.Top != null)
-                emp = opts.Top.ApplyTo(emp, new ODataQuerySettings()); //perform take
+            //if (opts.InlineCount != null)
+            //    count = all.Total;
+            //if (opts.Skip != null)
+            //    emp = opts.Skip.ApplyTo(emp, new ODataQuerySettings()); //perform skip
+            //if (opts.Top != null)
+            //    emp = opts.Top.ApplyTo(emp, new ODataQuerySettings()); //perform take
 
             #endregion
 
-            return new PageResult<dynamic>(emp, null, all.Total);
+            return new PageResult<dynamic>(all.Results, null, all.Total);
         }
 
         [HttpGet]
