@@ -147,7 +147,8 @@
 
             if (myPropertyInfo.Count(x => x.Item3.Trim().ToLower() == "id") != 0)
             {
-                throw new Exception($"Sample definition for grid cannot contain id");
+               myPropertyInfo.Remove(myPropertyInfo.First(x => x.Item3.Trim().ToLower() == "id"));
+                //throw new Exception($"Sample definition for grid cannot contain id");
             }
 
             myPropertyInfo.Add(new Tuple<Type, object, string>(typeof(string), "", "Id"));

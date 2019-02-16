@@ -46,8 +46,8 @@ namespace SampleHttpsServer
             
             config.Routes.MapHttpRoute(
                 "DefaultApi post",
-                "api/{controller}/{id}",
-                new { id = RouteParameter.Optional }
+                "apig/{dataaccess}/{controller}/{id}",
+                new { id = RouteParameter.Optional}
             );
           
             config.Routes.MapHttpRoute(

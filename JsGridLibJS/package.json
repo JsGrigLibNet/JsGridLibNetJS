@@ -1,6 +1,6 @@
 {
   "name": "jsgridlibjs",
-  "version": "3.0.4",
+  "version": "4.0.0",
   "description": "Js grid helper on the UI for the JsGrid Lib for DotNet backend",
   "main": "index.js",
   "scripts": {

@@ -12,21 +12,54 @@
     using JsGridLib.Controller;
     using JsGridLib.Implementations;
     using JsGridLib.Models;
-
-   // public class OrdersSchemaController : GenericJsGridSchemaController<PhoneBook> {}
+    
     public class OrdersController : GenericJsGridController
     {
        public OrdersController() : base((db, filter) => db, null, DbService.InMemoryJsGridDataStorage)
         {
         }
     }
-    public class OrdersSchemaController : GenericJsGridSchemaController
+    public class OrdersSchemaController : GenericJsGridSchemaFromDataSourceController
     {
-        public OrdersSchemaController()
-            : base(DbService.InMemoryJsGridDataStorage.LoadAll(1).Results.FirstOrDefault())
+        public OrdersSchemaController(): base(DbService.InMemoryJsGridDataStorage)
         {
         }
     }
+    public static class DbService
+    {
+        public static string TableName = "Orders";
+        public static InMemoryJsGridDataStorage InMemoryJsGridDataStorage = new InMemoryJsGridDataStorage();
+        public static object data = Enumerable.Range(0, 2500).Select(X =>
+        {
+            try
+            {
+                var p = new
+                {
+                    Birthday = DateTime.UtcNow.AddDays(X),
+                    Name = "my name " + X.ToString()
+                }.ToExpandoObject();
+                InMemoryJsGridDataStorage.Save(TableName, p);
+
+            }
+            catch (Exception e)
+            {
+
+            }
+            return new object();
+        }).ToList();
+
+    }
+    //public class OrdersSchemaController : GenericJsGridSchemaController
+    //{
+    //    public OrdersSchemaController()
+    //        : base(new
+    //        {
+    //            Birthday = DateTime.UtcNow,
+    //            Name = ""
+    //        })
+    //    {
+    //    }
+    //}
     //public class OrdersSchemaController : GenericJsGridSchemaController
     //{
     //    public OrdersSchemaController()
@@ -46,29 +79,6 @@
     //    {
     //    }
     //}
-    public static class DbService
-    {
-       public static InMemoryJsGridDataStorage InMemoryJsGridDataStorage = new InMemoryJsGridDataStorage();
-        public static object data = Enumerable.Range(0, 2500).Select(X =>
-        {
-            try
-            {
-                var p = new
-                {
-                    Birthday = DateTime.UtcNow.AddDays(X),
-                    Name = "my name " + X.ToString()
-                }.ToExpandoObject();
-                InMemoryJsGridDataStorage.Save(p);
-
-            }
-            catch (Exception e)
-            {
-
-            }
-            return new object();
-        }).ToList();
-
-    }
     public static class ExpandoExtension
     {
         public static ExpandoObject ToExpandoObject(this object obj)

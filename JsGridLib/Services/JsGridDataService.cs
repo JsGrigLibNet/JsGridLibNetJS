@@ -3,15 +3,12 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.Specialized;
-    using System.ComponentModel;
-    using System.Dynamic;
     using System.Linq;
     using System.Net.Http;
     using System.Reflection;
     using System.Web;
     using JsGridLib.Contracts;
     using JsGridLib.Models;
-    using Newtonsoft.Json.Linq;
 
     public class JsGridDataService<TEntity, TReadable, TUpdateable, TCreatable, TDeletable>
 
@@ -34,11 +31,11 @@
 
         bool IncludeIdField { get; }
 
-        public JsGridStorageStatistics GetAll(HttpRequestMessage request, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientFiltering, int take, int skip)
+        public JsGridStorageStatistics GetAll(HttpRequestMessage request,string dataAccess, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientFiltering)
         {
             var sample = this.GetFilterInstance<TReadable>(HttpUtility.ParseQueryString(request.RequestUri.Query));
 
-            JsGridStorageStatistics result = this.jsGridDataStorage.LoadAll(take, this.pocoToEntityConverter(sample), clientFiltering, skip);
+            JsGridStorageStatistics result = this.jsGridDataStorage.LoadAll(dataAccess, this.pocoToEntityConverter(sample), clientFiltering);
             return new JsGridStorageStatistics
             {
                 Total = result.Total,
@@ -46,9 +43,21 @@
             };
         }
 
-        public TReadable GetById(HttpRequestMessage request, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientFiltering, string id)
+        public JsGridStorageStatistics GetAllTop(HttpRequestMessage request, string dataAccess, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientFiltering, int take, int skip)
         {
-            return this.jsGridDataStorage.LoadById(id);
+            var sample = this.GetFilterInstance<TReadable>(HttpUtility.ParseQueryString(request.RequestUri.Query));
+
+            JsGridStorageStatistics result = this.jsGridDataStorage.LoadAllTop(dataAccess, take: take, sampleForFilter: this.pocoToEntityConverter(sample), clientSideFiltering: clientFiltering, skip: skip);
+            return new JsGridStorageStatistics
+            {
+                Total = result.Total,
+                Results = result.Results.Select(x => (object)this.entityToReadableConverter((TEntity)x))
+            };
+        }
+
+        public TReadable GetById(HttpRequestMessage request, string dataAccess, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientFiltering, string id)
+        {
+            return this.jsGridDataStorage.LoadById(dataAccess, id);
         }
 
         public T GetFilterInstance<T>(NameValueCollection fil)
@@ -77,54 +86,32 @@
             var res = new JsGridObject<TReadable>
             {
                 FieldsReadable = new SchemaFactory().SchemaFromType<TReadable>(this.IncludeIdField, sample).Fields,
-                FieldsUpdateable = new SchemaFactory().SchemaFromType<TUpdateable>(this.IncludeIdField, sample).Fields,
-                FieldsDeletable = new SchemaFactory().SchemaFromType<TDeletable>(this.IncludeIdField, sample).Fields,
-                FieldsCreatable = new SchemaFactory().SchemaFromType<TCreatable>(this.IncludeIdField, sample).Fields,
-                Settings = new JsGridTableSettings()
+                //FieldsUpdateable = new SchemaFactory().SchemaFromType<TUpdateable>(this.IncludeIdField, sample).Fields,
+                //FieldsDeletable = new SchemaFactory().SchemaFromType<TDeletable>(this.IncludeIdField, sample).Fields,
+                //FieldsCreatable = new SchemaFactory().SchemaFromType<TCreatable>(this.IncludeIdField, sample).Fields,
+                //Settings = new JsGridTableSettings()
             };
             return res;
         }
 
-        public void Post(TEntity client)
+        public void Post(string dataAccess, TEntity client)
         {
-            this.jsGridDataStorage.Update(client.ToExpandoObject());
+            this.jsGridDataStorage.Update(dataAccess, client.ToExpandoObject());
         }
 
-        public void Put(TEntity editedClient)
+        public void Put(string dataAccess, TEntity editedClient)
         {
-            this.jsGridDataStorage.Save(editedClient.ToExpandoObject());
+            this.jsGridDataStorage.Save(dataAccess, editedClient.ToExpandoObject());
         }
 
-        public void Delete(string id)
+        public void Delete(string dataAccess, string id)
         {
-            this.jsGridDataStorage.Delete(id);
+            this.jsGridDataStorage.Delete(dataAccess, id);
         }
-    }
 
-    public static class ExpandoExtension
-    {
-        public static ExpandoObject ToExpandoObject(this object obj)
+        public object GetDataSampleForSchema(HttpRequestMessage request, string dataaccess)
         {
-            IDictionary<string, object> expando = new ExpandoObject();
-            var tt = new List<PropertyDescriptor>();
-            if (obj is JObject)
-            {
-                var obj1 = (JObject)obj;
-                expando = obj1.ToObject<ExpandoObject>();
-                //foreach (var x in obj1)
-                //{
-                //    string name = x.Key;
-                //    JToken value = x.Value;
-                //    expando.Add(name, value.ToObject());
-                //}
-            }
-            else
-            {
-                foreach (PropertyDescriptor property in TypeDescriptor.GetProperties(obj.GetType()))
-                    expando.Add(property.Name, property.GetValue(obj));
-            }
-
-            return (ExpandoObject)expando;
+           return this.jsGridDataStorage.GetDataSampleForSchemaByDataAccess(dataaccess);
         }
     }
 }

@@ -11,20 +11,21 @@ var gridAppBuilder = function (page, gridElement) {
     //var hostUrl = 'https://ej2services.syncfusion.com/production/web-services/';
     var hostUrl = '';
     var data = function (tpe) {
+        var url = hostUrl + "apig/" + tpe + "/" + tpe;
         return new ej.data.DataManager({
-            url: hostUrl + 'api/' + tpe,
+            url: url,
             adaptor: new ej.data.WebApiAdaptor(),
             crossDomain: true,
             //offline:true
         });
     };
 
-    $.get("api/" + page + "Schema/Get?id=0").done(function (composite) {
+    $.get("apig/" + page + "/" + page + "Schema/Get?id=0").done(function (composite) {
         console.log(composite);
-        var col = [{ type: 'checkbox', allowFiltering: false, allowSorting: false, width: '60' }];
+        var col = [{ type: 'checkbox', allowFiltering: false, allowSorting: false, width: '40' }];
         col = col.concat(composite.FieldsReadable);
         col.push({
-            headerText: 'Actions', width: 160,
+            headerText: 'Actions', width: 60,
             commands: [{ type: 'Edit', buttonOption: { iconCss: ' e-icons e-edit', cssClass: 'e-flat' } },
             { type: 'Delete', buttonOption: { iconCss: 'e-icons e-delete', cssClass: 'e-flat' } },
             { type: 'Save', buttonOption: { iconCss: 'e-icons e-update', cssClass: 'e-flat' } },
@@ -81,18 +82,18 @@ var gridAppBuilder = function (page, gridElement) {
             },
             allowPaging: true,
             pageSettings: {
-                pageSize: 12,
+                pageSize: 10,
                 pageSizes: true,
-                enableQueryString: true,
-                currentPage: parseInt((function (name) {
-                    var url = window.location.href;
-                    name = name.replace(/[\[\]]/g, '\\$&');
-                    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-                        results = regex.exec(url);
-                    if (!results) return null;
-                    if (!results[2]) return '';
-                    return decodeURIComponent(results[2].replace(/\+/g, ' '));
-                })('page'), 10) || 1
+                //enableQueryString: false,
+                //currentPage: parseInt((function (name) {
+                //    var url = window.location.href;
+                //    name = name.replace(/[\[\]]/g, '\\$&');
+                //    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                //        results = regex.exec(url);
+                //    if (!results) return null;
+                //    if (!results[2]) return '';
+                //    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+                //})('page'), 10) || 1
             },
             toolbar: ['Print', 'ExcelExport', 'PdfExport'/*, 'CsvExport' */, 'Add', 'Edit', 'Delete', 'Update', 'Cancel', 'Search',
 
@@ -168,13 +169,13 @@ var gridAppBuilder = function (page, gridElement) {
         function getExcelExportProperties() {
             return {
 
-                footer: {
-                    footerRows: 8,
-                    rows: [
-                        { cells: [{ colSpan: 6, value: "Thank you for your business!", style: { fontColor: '#C67878', hAlign: 'Center', bold: true } }] },
-                        { cells: [{ colSpan: 6, value: "!Visit Again!", style: { fontColor: '#C67878', hAlign: 'Center', bold: true } }] }
-                    ]
-                },
+                //footer: {
+                //    footerRows: 8,
+                //    rows: [
+                //        { cells: [{ colSpan: 6, value: "Thank you for your business!", style: { fontColor: '#C67878', hAlign: 'Center', bold: true } }] },
+                //        { cells: [{ colSpan: 6, value: "!Visit Again!", style: { fontColor: '#C67878', hAlign: 'Center', bold: true } }] }
+                //    ]
+                //},
 
                 fileName: "My excel.xlsx",
                 /*

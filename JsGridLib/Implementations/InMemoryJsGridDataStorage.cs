@@ -9,20 +9,22 @@
     public class InMemoryJsGridDataStorage : IJsGridStorage
 
     {
-        static List<IDictionary<string, object>> db1 = new List<IDictionary<string, object>>();
+        static Dictionary<string, List<IDictionary<string, object>>> db1 = new Dictionary<string, List<IDictionary<string, object>>>();
 
         readonly Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> defaultFiltering = (x, y) => x;
 
-        List<IDictionary<string, object>> db
+        Dictionary<string, List<IDictionary<string, object>>> db
         {
             set => db1 = value;
             get => db1;
         }
 
-        public JsGridStorageStatistics LoadAll(int take = 100, dynamic sampleForFilter = null, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientSideFiltering = null, int skip = 0)
+        public JsGridStorageStatistics LoadAllTop(string storageAccess, int take = 100, dynamic sampleForFilter = null, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientSideFiltering = null, int skip = 0)
         {
+            this.TryInitializeStorageAccess(storageAccess);
+
             clientSideFiltering = clientSideFiltering ?? this.defaultFiltering;
-            var d = (IEnumerable<dynamic>)clientSideFiltering(this.db, sampleForFilter);
+            var d = (IEnumerable<dynamic>)clientSideFiltering(this.db[storageAccess], sampleForFilter);
             return new JsGridStorageStatistics
             {
                 Results = d.Skip(skip).Take(take),
@@ -30,18 +32,40 @@
             };
         }
 
-        public dynamic LoadById(string id)
+        void TryInitializeStorageAccess(string storageAccess)
         {
-            return this.db.FirstOrDefault(x => x["Id"].ToString() == id.ToString());
+            if (!this.db.ContainsKey(storageAccess))
+            {
+                this.db.Add(storageAccess, new List<IDictionary<string, object>>());
+            }
         }
 
-        public void Update(IDictionary<string, object> client)
+        public JsGridStorageStatistics LoadAll(string storageAccess, dynamic sampleForFilter = null, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientSideFiltering = null)
         {
+            this.TryInitializeStorageAccess(storageAccess);
+            clientSideFiltering = clientSideFiltering ?? this.defaultFiltering;
+            var d = (IEnumerable<dynamic>)clientSideFiltering(this.db[storageAccess], sampleForFilter);
+            return new JsGridStorageStatistics
+            {
+                Results = d.Take(1000000),
+                Total = this.db.Count
+            };
+        }
+
+        public dynamic LoadById(string storageAccess, string id)
+        {
+            this.TryInitializeStorageAccess(storageAccess);
+            return this.db[storageAccess].FirstOrDefault(x => x["Id"].ToString() == id.ToString());
+        }
+
+        public void Update(string storageAccess, IDictionary<string, object> client)
+        {
+            this.TryInitializeStorageAccess(storageAccess);
             bool updated = false;
             for (int i = 0; i < this.db.Count; i++)
-                if (this.db[i]["Id"].ToString() == client["Id"].ToString())
+                if (this.db[storageAccess][i]["Id"].ToString() == client["Id"].ToString())
                 {
-                    this.db[i] = client;
+                    this.db[storageAccess][i] = client;
                     updated = true;
                     break;
                 }
@@ -50,25 +74,34 @@
                 throw new Exception($"Unable to Update : Id of {client["Id"]} not found");
         }
 
-        public void Save(IDictionary<string, object> client)
+        public void Save(string storageAccess, IDictionary<string, object> client)
         {
+            this.TryInitializeStorageAccess(storageAccess);
             client["Id"] = Guid.NewGuid().ToString().Replace("-", "");
-            this.db.Add(client);
+            this.db[storageAccess].Add(client);
         }
 
-        public void Delete(string id)
+        public void Delete(string storageAccess, string id)
         {
+            this.TryInitializeStorageAccess(storageAccess);
             bool updated = false;
-            for (int i = 0; i < this.db.Count; i++)
-                if (this.db[i]["Id"].ToString() == id)
+            for (int i = 0; i < this.db[storageAccess].Count; i++)
+                if (this.db[storageAccess][i]["Id"].ToString() == id)
                 {
-                    this.db.RemoveAt(i);
+                    this.db[storageAccess].RemoveAt(i);
                     updated = true;
                     break;
                 }
 
             if (!updated)
                 throw new Exception($"Unable to delete : Id of {id} not found");
+        }
+
+        public object GetDataSampleForSchemaByDataAccess(string dataaccess)
+        {
+            this.TryInitializeStorageAccess(dataaccess);
+            dynamic sample = this.db[dataaccess].First();
+            return sample;
         }
     }
 }

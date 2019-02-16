@@ -9,12 +9,12 @@
 
         public List<dynamic> FieldsReadable { get; set; }
 
-        public List<dynamic> FieldsCreatable { get; set; }
+        //public List<dynamic> FieldsCreatable { get; set; }
 
-        public List<dynamic> FieldsUpdateable { get; set; }
+        //public List<dynamic> FieldsUpdateable { get; set; }
 
-        public List<dynamic> FieldsDeletable { get; set; }
+        //public List<dynamic> FieldsDeletable { get; set; }
 
-        public JsGridTableSettings Settings { get; set; }
+       // public JsGridTableSettings Settings { get; set; }
     }
 }
