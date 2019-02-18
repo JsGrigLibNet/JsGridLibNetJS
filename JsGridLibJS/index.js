@@ -1,6 +1,6 @@
 
 
-var gridAppBuilder = function (page, gridElement) {
+var gridAppBuilder = function (gridElement, page, controller) {
     var ele = document.getElementById('container');
     if (ele) {
         ele.style.visibility = "visible";
@@ -10,8 +10,8 @@ var gridAppBuilder = function (page, gridElement) {
 
     //var hostUrl = 'https://ej2services.syncfusion.com/production/web-services/';
     var hostUrl = '';
-    var data = function (tpe) {
-        var url = hostUrl + "apig/" + tpe + "/" + tpe;
+    var data = function () {
+        var url = hostUrl + "apig/" + (controller || page) + "/" + page;
         return new ej.data.DataManager({
             url: url,
             adaptor: new ej.data.WebApiAdaptor(),
@@ -37,7 +37,7 @@ var gridAppBuilder = function (page, gridElement) {
         //https://ej2.syncfusion.com/javascript/documentation/grid/columns/?_ga=2.243944193.500114582.1549739902-2018847989.1549546969#column-template
         var grid = new ej.grids.Grid({
             // rowTemplate: "#hello", 
-            dataSource: data(page),
+            dataSource: data(),
             allowReordering: true,
             allowResizing: true,
 
