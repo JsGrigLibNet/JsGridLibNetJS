@@ -15,13 +15,28 @@
     
     public class OrdersController : GenericJsGridController
     {
-       public OrdersController() : base((db, filter) => db, null, DbService.InMemoryJsGridDataStorage)
+       public OrdersController() : base(new GridRequestOptions() )
         {
         }
     }
+
+    public class GridRequestOptions : IGridRequestOptions
+    {
+        public GridRequestOptions()
+        {
+            storage = DbService.InMemoryJsGridDataStorage;
+        }
+        public bool IsAuthorized(HttpRequestMessage request)
+        {
+            return true;
+        }
+
+        public IJsGridStorage storage { get; set; }
+    }
+
     public class OrdersSchemaController : GenericJsGridSchemaFromDataSourceController
     {
-        public OrdersSchemaController(): base(DbService.InMemoryJsGridDataStorage)
+        public OrdersSchemaController(): base(new GridRequestOptions())
         {
         }
     }

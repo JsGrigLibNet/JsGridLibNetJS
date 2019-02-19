@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Web.Http.OData.Query;
     using JsGridLib.Contracts;
     using JsGridLib.Models;
 
@@ -19,12 +20,13 @@
             get => db1;
         }
 
-        public JsGridStorageStatistics LoadAllTop(string storageAccess, int take = 100, dynamic sampleForFilter = null, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientSideFiltering = null, int skip = 0)
+        public JsGridStorageStatistics LoadAllTop(string storageAccess, int take = 100, dynamic sampleForFilter = null, ODataQueryOptions opt = null, int skip = 0)
         {
             this.TryInitializeStorageAccess(storageAccess);
 
-            clientSideFiltering = clientSideFiltering ?? this.defaultFiltering;
-            var d = (IEnumerable<dynamic>)clientSideFiltering(this.db[storageAccess], sampleForFilter);
+            //opt = clientSideFiltering ?? this.defaultFiltering;
+            //var d = (IEnumerable<dynamic>)clientSideFiltering(this.db[storageAccess], sampleForFilter);
+            var d = (IEnumerable<dynamic>)this.db[storageAccess];
             return new JsGridStorageStatistics
             {
                 Results = d.Skip(skip).Take(take),
@@ -40,11 +42,12 @@
             }
         }
 
-        public JsGridStorageStatistics LoadAll(string storageAccess, dynamic sampleForFilter = null, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientSideFiltering = null)
+        public JsGridStorageStatistics LoadAll(string storageAccess, dynamic sampleForFilter = null, ODataQueryOptions clientSideFiltering = null)
         {
             this.TryInitializeStorageAccess(storageAccess);
-            clientSideFiltering = clientSideFiltering ?? this.defaultFiltering;
-            var d = (IEnumerable<dynamic>)clientSideFiltering(this.db[storageAccess], sampleForFilter);
+            //clientSideFiltering = clientSideFiltering ?? this.defaultFiltering;
+            //var d = (IEnumerable<dynamic>)clientSideFiltering(this.db[storageAccess], sampleForFilter);
+            var d = (IEnumerable<dynamic>)this.db[storageAccess];
             return new JsGridStorageStatistics
             {
                 Results = d.Take(1000000),

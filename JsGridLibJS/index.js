@@ -1,42 +1,89 @@
 
 
-var gridAppBuilder = function (gridElement, page, controller) {
+var gridAppBuilder = function (opts) {
+    opts = opts ||
+        {
+            gridElement: '',
+            page: '',
+            controllerData: '',
+            controllerSchema: '',
+            offlineMode: false,
+            hideSelectionBoxColumn: false,
+            hideActionsColumn: false,
+            gridOption: {
+                //headerTemplate:'#headerTemplate',
+                //detailTemplate:'#detailTemplate',
+                //rowTemplate:'#rowTemplate',
+            },
+            useInlineEdit: false,
+            hideExportControls: false,
+            pageSize: 0,
+            hidePaging: false,
+            preventEditing: false,
+            hideGridLines: false,
+            hideHeader: false,
+            rowSelected: function (arg) { },
+            recordDoubleClick: function (arg) { },
+            recordClick: function (arg) { }
+        };
+
     var ele = document.getElementById('container');
     if (ele) {
         ele.style.visibility = "visible";
     }
-    gridElement = gridElement || '#Grid';
+    opts.gridElement = opts.gridElement || '#Grid';
     //var page = "Orders";
 
     //var hostUrl = 'https://ej2services.syncfusion.com/production/web-services/';
     var hostUrl = '';
     var data = function () {
-        var url = hostUrl + "apig/" + (controller || page) + "/" + page;
+        var url = (opts.hidePaging && (hostUrl + "apig/" + opts.page + "/" + (opts.controllerData || opts.page) + '/?$inlinecount=allpages&$skip=0&$top=' + opts.pageSize)) || hostUrl + "apig/" + opts.page + "/" + (opts.controllerData || opts.page);
         return new ej.data.DataManager({
             url: url,
-            adaptor: new ej.data.WebApiAdaptor(),
+            adaptor: (opts.offlineMode && ej.data.RemoteSaveAdaptor()) || new ej.data.WebApiAdaptor(),
             crossDomain: true,
-            //offline:true
+            offline: opts.offlineMode
         });
     };
 
-    $.get("apig/" + page + "/" + page + "Schema/Get?id=0").done(function (composite) {
+    $.get("apig/" + opts.page + "/" + (opts.controllerSchema || opts.page) + "/Get?id=0").done(function (composite) {
         console.log(composite);
-        var col = [{ type: 'checkbox', allowFiltering: false, allowSorting: false, width: '40' }];
+        var col = (opts.hideSelectionBoxColumn && []) || [{ type: 'checkbox', allowFiltering: false, allowSorting: false, width: '40' }];
         col = col.concat(composite.FieldsReadable);
-        col.push({
-            headerText: 'Actions', width: 60,
-            commands: [{ type: 'Edit', buttonOption: { iconCss: ' e-icons e-edit', cssClass: 'e-flat' } },
-            { type: 'Delete', buttonOption: { iconCss: 'e-icons e-delete', cssClass: 'e-flat' } },
-            { type: 'Save', buttonOption: { iconCss: 'e-icons e-update', cssClass: 'e-flat' } },
-            { type: 'Cancel', buttonOption: { iconCss: 'e-icons e-cancel-icon', cssClass: 'e-flat' } }]
-        });
+        if (!opts.hideActionsColumn) {
+            col.push({
+                headerText: 'Actions', width: 60,
+                commands: [{ type: 'Edit', buttonOption: { iconCss: ' e-icons e-edit', cssClass: 'e-flat' } },
+                { type: 'Delete', buttonOption: { iconCss: 'e-icons e-delete', cssClass: 'e-flat' } },
+                { type: 'Save', buttonOption: { iconCss: 'e-icons e-update', cssClass: 'e-flat' } },
+                { type: 'Cancel', buttonOption: { iconCss: 'e-icons e-cancel-icon', cssClass: 'e-flat' } }]
+            });
+        }
         //headerTemplate: '#employeetemplate'
         //    rowTemplate: '#rowtemplate',
         //https://ej2.syncfusion.com/demos/#/material/grid/grid-overview.html
         //https://ej2.syncfusion.com/javascript/documentation/grid/columns/?_ga=2.243944193.500114582.1549739902-2018847989.1549546969#column-template
-        var grid = new ej.grids.Grid({
+        var editMode = 'Dialog';
+        if (opts.useInlineEdit) {
+            editMode = 'Inline';
+        }
+
+        //function create(args) {
+
+        //          this.getHeaderContent().hide();
+
+        //      }
+        var gridAppOpts = {
+            dataBound: function (args) {
+                //hide Grid header 
+
+                opts.hideHeader && $(this.getHeaderContent()).hide();
+
+                //add border to the content at the top 
+                // this.getContent().css("border-top", "1px solid #c8c8c8");
+            },
             // rowTemplate: "#hello", 
+            //showColumnHeaders:false,
             dataSource: data(),
             allowReordering: true,
             allowResizing: true,
@@ -52,10 +99,13 @@ var gridAppBuilder = function (gridElement, page, controller) {
                     e.form.querySelector("tr").remove(); // in this sample check box is in first row 
                 }
             },
-            contextMenuItems: ['AutoFit', 'AutoFitAll', 'SortAscending', 'SortDescending',
+            contextMenuItems: [
+                'AutoFit', 'AutoFitAll', 'SortAscending', 'SortDescending',
                 'Copy', 'Edit', 'Delete', 'Save', 'Cancel',
                 'PdfExport', 'ExcelExport', 'CsvExport', 'FirstPage', 'PrevPage',
-                'LastPage', 'NextPage'],
+                'LastPage', 'NextPage'
+            ],
+            // create: "create",
             allowExcelExport: true,
             allowPdfExport: true,
             selectionSettings: { type: 'Multiple' },
@@ -64,25 +114,25 @@ var gridAppBuilder = function (gridElement, page, controller) {
             groupSettings: { showGroupedColumn: true },
             showColumnMenu: true,
             //Default,none, Both, Horizontal,Vertical
-            gridLines: 'Default',
+            gridLines: (!opts.hideGridLines) && 'Default',
             hierarchyPrintMode: 'All',
             allowSorting: true,
             allowFiltering: true,
-            filterSettings: { type: 'Excel'/*or Menu */ },
+            filterSettings: { type: 'Excel' /*or Menu */ },
             //allowCsvExport: true,
             editSettings: {
-                allowEditing: true,
+                allowEditing: (!opts.preventEditing),
                 allowAdding: true,
                 allowDeleting: true,
                 //mode: 'Normal',
                 newRowPosition: 'Top',
                 //remove this to edit inline
-                mode: 'Dialog',
+                mode: editMode,
                 showDeleteConfirmDialog: true
             },
-            allowPaging: true,
+            allowPaging: (!opts.hidePaging),
             pageSettings: {
-                pageSize: 10,
+                pageSize: opts.pageSize || 10,
                 pageSizes: true,
                 //enableQueryString: false,
                 //currentPage: parseInt((function (name) {
@@ -95,8 +145,9 @@ var gridAppBuilder = function (gridElement, page, controller) {
                 //    return decodeURIComponent(results[2].replace(/\+/g, ' '));
                 //})('page'), 10) || 1
             },
-            toolbar: ['Print', 'ExcelExport', 'PdfExport'/*, 'CsvExport' */, 'Add', 'Edit', 'Delete', 'Update', 'Cancel', 'Search',
-
+            toolbar: (opts.hideExportControls && []) || [
+                'Print', 'ExcelExport', 'PdfExport' /*, 'CsvExport' */, 'Add', 'Edit', 'Delete', 'Update', 'Cancel',
+                'Search',
                 { text: 'Copy', tooltipText: 'Copy', prefixIcon: 'e-copy', id: 'copy' },
                 { text: 'Copy With Header', tooltipText: 'Copy With Header', prefixIcon: 'e-copy', id: 'copyHeader' }
             ],
@@ -105,7 +156,41 @@ var gridAppBuilder = function (gridElement, page, controller) {
             //https://ej2.syncfusion.com/javascript/documentation/grid/columns/?no-cache=1&_ga=2.240296455.500114582.1549739902-2018847989.1549546969#auto-generation
             //https://stackblitz.com/edit/h7qscj-ztdpkr?file=index.js
             columns: col,
+            recordDoubleClick: opts.recordDoubleClick || function (args) {
 
+                // args.cancel   - Returns the cancel option value.
+
+                // args.model    - Returns the grid model.
+
+                // args.type     - Returns the name of the event.
+
+                //args.currentRowIndex  -Return the index of the row clicked.
+
+                //args.currentRow  -Return the target row.
+
+                //args.currentData  -Return the data of the row.
+
+            },
+            rowSelected: opts.rowSelected || function (args) {
+
+            },
+            recordClick: opts.recordClick || function (args) {
+
+
+
+                // args.cancel   - Returns the cancel option value.
+
+                // args.model    - Returns the grid model.
+
+                // args.type     - Returns the name of the event.
+
+                //args.currentRowIndex  -Return the index of the row clicked.
+
+                //args.currentRow  -Return the target row.
+
+                //args.currentData  -Return the data of the row.
+
+            },
             toolbarClick: function (args) {
                 if (grid.getSelectedRecords().length > 0) {
                     var withHeader = false;
@@ -124,10 +209,15 @@ var gridAppBuilder = function (gridElement, page, controller) {
             //    hierarchyPrintMode: 'All',
             //    columns: col
             //}
-        });
+        };
+
+        $.extend(gridAppOpts, opts.gridOption || {});
 
 
-        grid.appendTo(gridElement);
+        var grid = new ej.grids.Grid(gridAppOpts);
+
+
+        grid.appendTo(opts.gridElement);
         grid.toolbarClick = function (args) {
             if (args.item.id === 'Grid_pdfexport') {
                 grid.pdfExport();
@@ -148,6 +238,18 @@ var gridAppBuilder = function (gridElement, page, controller) {
                     args.index = (grid.pageSettings.currentPage * grid.pageSettings.pageSize) - 1;
                 }
             }
+
+
+            if (args.requestType == "searching") {
+                for (var i = 0; i < this.getColumns().length; i++) {
+                    if (this.getColumns()[i].field) {
+                        this.searchSettings.fields.push(this.getColumns()[i]
+                            .field); //These columns fields will only be included in searching. So  
+                    }
+                }
+            }
+
+
         }
 
         //var dropDownType = new ej.dropdowns.DropDownList({

@@ -7,17 +7,23 @@
     using System.Web.Http.OData.Query;
     using JsGridLib.Contracts;
 
-    public class GenericJsGridSchemaController<TEntity> : GenericJsGridController<TEntity, TEntity, TEntity, TEntity, TEntity>
+    public class GenericJsGridSchemaController<TEntity> : GenericJsGridController<TEntity>
 
     {
-        public GenericJsGridSchemaController()
-            : base(false, null, null, null, null, null, null, null)
+      
+        public GenericJsGridSchemaController(IGridRequestOptions gridRequestOptions)
+            : base(gridRequestOptions, false)
         {
+           
         }
 
         [HttpGet]
         public override HttpResponseMessage Get(string id, [FromUri]string dataaccess)
         {
+            if (!GridRequestOptions.IsAuthorized(Request))
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.Unauthorized, $"You are not allowed to access {dataaccess}");
+            }
             return this.Request.CreateResponse(HttpStatusCode.OK, this.Service.GetSchemaAndSettings());
         }
 
@@ -46,13 +52,13 @@
         }
     }
 
-    public class GenericJsGridSchemaController : GenericJsGridController<dynamic, dynamic, dynamic, dynamic, dynamic>
+    public class GenericJsGridSchemaController : GenericJsGridController<dynamic>
 
     {
         private readonly object Sample;
-
-        public GenericJsGridSchemaController(object sample)
-            : base(false, null, null, null, null, null, null, null)
+   
+        public GenericJsGridSchemaController(object sample, IGridRequestOptions gridRequestOptions)
+            : base(gridRequestOptions, false)
         {
             this.Sample = sample; //.ToExpandoObject();
         }
@@ -60,6 +66,10 @@
         [HttpGet]
         public override HttpResponseMessage Get(string id, [FromUri]string dataaccess)
         {
+            if (!GridRequestOptions.IsAuthorized(Request))
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.Unauthorized, $"You are not allowed to access {dataaccess}");
+            }
             return this.Request.CreateResponse(HttpStatusCode.OK, (object)this.Service.GetSchemaAndSettings(this.Sample));
         }
 
@@ -88,17 +98,22 @@
         }
     }
 
-    public class GenericJsGridSchemaFromDataSourceController : GenericJsGridController<dynamic, dynamic, dynamic, dynamic, dynamic>
+    public class GenericJsGridSchemaFromDataSourceController : GenericJsGridController<dynamic>
 
     {
-        public GenericJsGridSchemaFromDataSourceController(IJsGridStorage storage)
-            : base(false, null, null, storage, null, null, null, null)
+     
+        public GenericJsGridSchemaFromDataSourceController( IGridRequestOptions gridRequestOptions)
+            : base(gridRequestOptions, false)
         {
         }
 
         [HttpGet]
         public override HttpResponseMessage Get(string id, [FromUri]string dataaccess)
         {
+            if (!GridRequestOptions.IsAuthorized(Request))
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.Unauthorized, $"You are not allowed to access {dataaccess}");
+            }
             var sample = this.Service.GetDataSampleForSchema(this.Request, dataaccess);
             var schema = (object)this.Service.GetSchemaAndSettings(sample);
             return this.Request.CreateResponse(HttpStatusCode.OK, schema);

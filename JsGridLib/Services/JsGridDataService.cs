@@ -7,55 +7,50 @@
     using System.Net.Http;
     using System.Reflection;
     using System.Web;
+    using System.Web.Http.OData.Query;
     using JsGridLib.Contracts;
     using JsGridLib.Models;
 
-    public class JsGridDataService<TEntity, TReadable, TUpdateable, TCreatable, TDeletable>
+    public class JsGridDataService<TEntity>
 
     {
-        readonly Func<TEntity, TReadable> entityToReadableConverter;
         readonly IJsGridStorage jsGridDataStorage;
-        readonly Func<TReadable, TEntity> pocoToEntityConverter;
 
         public JsGridDataService(
             IJsGridStorage jsGridDataStorage,
-            Func<TReadable, TEntity> pocoToEntityConverter,
-            Func<TEntity, TReadable> entityToReadableConverter,
             bool includeIdField)
         {
             this.IncludeIdField = includeIdField;
             this.jsGridDataStorage = jsGridDataStorage;
-            this.entityToReadableConverter = entityToReadableConverter;
-            this.pocoToEntityConverter = pocoToEntityConverter;
         }
 
         bool IncludeIdField { get; }
 
-        public JsGridStorageStatistics GetAll(HttpRequestMessage request,string dataAccess, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientFiltering)
+        public JsGridStorageStatistics GetAll(HttpRequestMessage request,string dataAccess, ODataQueryOptions opt)
         {
-            var sample = this.GetFilterInstance<TReadable>(HttpUtility.ParseQueryString(request.RequestUri.Query));
+            var sample = this.GetFilterInstance<TEntity>(HttpUtility.ParseQueryString(request.RequestUri.Query));
 
-            JsGridStorageStatistics result = this.jsGridDataStorage.LoadAll(dataAccess, this.pocoToEntityConverter(sample), clientFiltering);
+            JsGridStorageStatistics result = this.jsGridDataStorage.LoadAll(dataAccess,sample, opt);
             return new JsGridStorageStatistics
             {
                 Total = result.Total,
-                Results = result.Results.Select(x => (object)this.entityToReadableConverter((TEntity)x))
+                Results = result.Results.Select(x => (object)((TEntity)x))
             };
         }
 
-        public JsGridStorageStatistics GetAllTop(HttpRequestMessage request, string dataAccess, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientFiltering, int take, int skip)
+        public JsGridStorageStatistics GetAllTop(HttpRequestMessage request, string dataAccess, ODataQueryOptions opt, int take, int skip)
         {
-            var sample = this.GetFilterInstance<TReadable>(HttpUtility.ParseQueryString(request.RequestUri.Query));
+            var sample = this.GetFilterInstance<TEntity>(HttpUtility.ParseQueryString(request.RequestUri.Query));
 
-            JsGridStorageStatistics result = this.jsGridDataStorage.LoadAllTop(dataAccess, take: take, sampleForFilter: this.pocoToEntityConverter(sample), clientSideFiltering: clientFiltering, skip: skip);
+            JsGridStorageStatistics result = this.jsGridDataStorage.LoadAllTop(dataAccess, take,  (sample), opt, skip);
             return new JsGridStorageStatistics
             {
                 Total = result.Total,
-                Results = result.Results.Select(x => (object)this.entityToReadableConverter((TEntity)x))
+                Results = result.Results.Select(x => (object)((TEntity)x))
             };
         }
 
-        public TReadable GetById(HttpRequestMessage request, string dataAccess, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> clientFiltering, string id)
+        public TEntity GetById(HttpRequestMessage request, string dataAccess,  string id)
         {
             return this.jsGridDataStorage.LoadById(dataAccess, id);
         }
@@ -81,14 +76,14 @@
             return filterObj;
         }
 
-        public JsGridObject<TReadable> GetSchemaAndSettings(object sample = null)
+        public JsGridObject<TEntity> GetSchemaAndSettings(object sample = null)
         {
-            var res = new JsGridObject<TReadable>
+            var res = new JsGridObject<TEntity>
             {
-                FieldsReadable = new SchemaFactory().SchemaFromType<TReadable>(this.IncludeIdField, sample).Fields,
-                //FieldsUpdateable = new SchemaFactory().SchemaFromType<TUpdateable>(this.IncludeIdField, sample).Fields,
+                FieldsReadable = new SchemaFactory().SchemaFromType<TEntity>(this.IncludeIdField, sample).Fields,
+                //FieldsUpdateable = new SchemaFactory().SchemaFromType<TEntity>(this.IncludeIdField, sample).Fields,
                 //FieldsDeletable = new SchemaFactory().SchemaFromType<TDeletable>(this.IncludeIdField, sample).Fields,
-                //FieldsCreatable = new SchemaFactory().SchemaFromType<TCreatable>(this.IncludeIdField, sample).Fields,
+                //FieldsCreatable = new SchemaFactory().SchemaFromType<TEntity>(this.IncludeIdField, sample).Fields,
                 //Settings = new JsGridTableSettings()
             };
             return res;

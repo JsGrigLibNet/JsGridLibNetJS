@@ -11,59 +11,58 @@
     using JsGridLib.Contracts;
     using JsGridLib.Models;
     using JsGridLib.Services;
-    public class GenericJsGridController<TEntity, TReadable, TUpdateable, TCreatable, TDeletable>
+    public class GenericJsGridController<TEntity>
        : ApiController
 
     {
         readonly object validationDefinition = new { };
 
+        protected IGridRequestOptions GridRequestOptions { set; get; }
         public GenericJsGridController(
-            bool includeIdField,
-            Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> filter,
-            object validationDefinition,
-            IJsGridStorage storage,
-            Func<TReadable, TEntity> pocoToEntityConverter,
-            Func<TEntity, TReadable> entityToPocoConverter,
-            Func<TUpdateable, TEntity> editableToEntityConverter,
-            Func<TCreatable, TEntity> creatableToEntityConverter
+            IGridRequestOptions gridRequestOptions,
+            bool includeIdField
         
         )
         {
+            if (gridRequestOptions != null)
+                this.GridRequestOptions = gridRequestOptions;
             this.IncludeIdField = includeIdField;
-            this.CreatableToEntityConverter = creatableToEntityConverter;
-            this.EditableToEntityConverter = editableToEntityConverter;
-            this.Filter = filter;
+            //this.CreatableToEntityConverter = creatableToEntityConverter;
+            //this.EditableToEntityConverter = editableToEntityConverter;
+           
             this.validationDefinition = validationDefinition;
-            this.Service = new JsGridDataService<TEntity, TReadable, TUpdateable, TCreatable, TDeletable>(
-                storage,
-                pocoToEntityConverter,
-                entityToPocoConverter,
-                this.IncludeIdField);
+            this.Service = new JsGridDataService<TEntity>(
+                gridRequestOptions. storage,
+                this.IncludeIdField
+                );
         }
 
-        Func<TUpdateable, TEntity> EditableToEntityConverter { get; }
-
-        Func<TCreatable, TEntity> CreatableToEntityConverter { get; }
-
+       
       
         bool IncludeIdField { get; }
 
-        Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> Filter { get; }
+       // Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> Filter { get; }
 
-        public JsGridDataService<TEntity, TReadable, TUpdateable, TCreatable, TDeletable> Service { set; get; }
+        public JsGridDataService<TEntity> Service { set; get; }
 
         [HttpGet]
         public virtual PageResult<dynamic> Get(ODataQueryOptions opts,[FromUri]string dataaccess)
         {
+
+            if (!GridRequestOptions.IsAuthorized(Request))
+            {
+                return  new PageResult<dynamic>(new List<dynamic>(), null, 0);
+            }
+
             #region MyRegion
 
-            IEnumerable<KeyValuePair<string, string>> queryString = this.Request.GetQueryNameValuePairs();
-            KeyValuePair<string, string> filter = queryString.FirstOrDefault(x => x.Key == "$filter");
-            FilterQueryOption cleanFilter = filter.Value == null || !filter.Value.Contains("(undefined(null,undefined))") ? opts.Filter : new FilterQueryOption(filter.Value.Replace("(undefined(null,undefined)) or ", "").Replace(" or (undefined(null,undefined))", "").Replace("(undefined(null,undefined)) and ", "").Replace(" and (undefined(null,undefined))", "").Trim(), opts.Context);
+            //IEnumerable<KeyValuePair<string, string>> queryString = this.Request.GetQueryNameValuePairs();
+            //KeyValuePair<string, string> filter = queryString.FirstOrDefault(x => x.Key == "$filter");
+            //FilterQueryOption cleanFilter = filter.Value == null || !filter.Value.Contains("(undefined(null,undefined))") ? opts.Filter : new FilterQueryOption(filter.Value.Replace("(undefined(null,undefined)) or ", "").Replace(" or (undefined(null,undefined))", "").Replace("(undefined(null,undefined)) and ", "").Replace(" and (undefined(null,undefined))", "").Trim(), opts.Context);
 
             JsGridStorageStatistics all = opts.Top==null?
-                this.Service.GetAll(this.Request, dataaccess, this.Filter):
-                this.Service.GetAllTop(this.Request, dataaccess, this.Filter, opts.Top?.Value ?? 100, opts.Skip?.Value ?? 0);
+                this.Service.GetAll(this.Request, dataaccess, opts) :
+                this.Service.GetAllTop(this.Request, dataaccess, opts, opts.Top?.Value ?? 100, opts.Skip?.Value ?? 0);
             //IQueryable<dynamic> emp = all.Results.ToList().AsQueryable();
 
             //long count = all.Total;
@@ -94,22 +93,36 @@
         [HttpGet]
         public virtual HttpResponseMessage Get(string id, [FromUri]string dataaccess)
         {
-            return this.Request.CreateResponse(HttpStatusCode.OK, this.Service.GetById(this.Request, dataaccess, this.Filter, id));
+            if (!GridRequestOptions.IsAuthorized(Request))
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.Unauthorized, $"You are not allowed to access {dataaccess}");
+            }
+            return this.Request.CreateResponse(HttpStatusCode.OK, this.Service.GetById(this.Request, dataaccess,  id));
         }
 
         [HttpPost]
-        public virtual HttpResponseMessage Put([FromBody] TUpdateable client, [FromUri]string dataaccess)
+        public virtual HttpResponseMessage Put([FromBody] TEntity client, [FromUri]string dataaccess)
         {
-            TEntity entity = this.EditableToEntityConverter(client);
+            if (!GridRequestOptions.IsAuthorized(Request))
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.Unauthorized, $"You are not allowed to access {dataaccess}");
+            }
+
+            TEntity entity = client;
             this.Service.Put(dataaccess, entity);
             return this.Request.CreateResponse(HttpStatusCode.OK);
         }
 
         //Used to modify and update a resource
         [HttpPut]
-        public virtual HttpResponseMessage Post([FromBody] TCreatable editedClient, [FromUri]string dataaccess)
+        public virtual HttpResponseMessage Post([FromBody] TEntity editedClient, [FromUri]string dataaccess)
         {
-            TEntity creatable = this.CreatableToEntityConverter(editedClient);
+            if (!GridRequestOptions.IsAuthorized(Request))
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.Unauthorized, $"You are not allowed to access {dataaccess}");
+            }
+
+            TEntity creatable = editedClient;
             this.Service.Post(dataaccess, creatable);
             return this.Request.CreateResponse(HttpStatusCode.OK);
         }
@@ -117,6 +130,10 @@
         [HttpDelete]
         public virtual HttpResponseMessage Delete(string id, [FromUri]string dataaccess)
         {
+            if (!GridRequestOptions.IsAuthorized(Request))
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.Unauthorized, $"You are not allowed to access {dataaccess}");
+            }
             this.Service.Delete(dataaccess, id);
             return this.Request.CreateResponse(HttpStatusCode.OK);
         }
@@ -124,84 +141,81 @@
 
     #region MyRegion
 
-    public class GenericJsGridController<TEntity> : GenericJsGridController<TEntity, TEntity, TEntity, TEntity, TEntity>
+    //public class GenericJsGridController<TEntity> : GenericJsGridController<TEntity, TEntity, TEntity, TEntity, TEntity>
 
-    {
-        public GenericJsGridController(bool includeIdField, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> filter, object validationDefinition, IJsGridStorage storage)
-            : base(includeIdField, filter, validationDefinition, storage, pe => pe, pe => pe, pe => pe, pe => pe)
-        {
-        }
+    //{
+    //    public GenericJsGridController(IGridRequestOptions gridRequestOptions,bool includeIdField, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> filter, object validationDefinition, IJsGridStorage storage)
+    //        : base(gridRequestOptions, includeIdField, pe => pe, pe => pe, pe => pe, pe => pe)
+    //    {
+    //    }
 
-        public GenericJsGridController(Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> filter, object validationDefinition, IJsGridStorage storage)
-            : base(false, filter, validationDefinition, storage, pe => pe, pe => pe, pe => pe, pe => pe)
-        {
-        }
-    }
+    //    public GenericJsGridController(IGridRequestOptions gridRequestOptions, object validationDefinition, IJsGridStorage storage)
+    //        : base(gridRequestOptions, false, pe => pe, pe => pe, pe => pe, pe => pe)
+    //    {
+    //    }
+    //}
 
-    public class GenericJsGridController<TEntity, TReadable> : GenericJsGridController<TEntity, TReadable, TReadable, TReadable, TReadable>
+    //public class GenericJsGridController<TEntity, TEntity> : GenericJsGridController<TEntity, TEntity, TEntity, TEntity, TEntity>
 
-    {
-        public GenericJsGridController(
-            bool includeIdField,
-            Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> filter,
-            object validationDefinition,
-            IJsGridStorage storage,
-            Func<TReadable, TEntity> pocoToEntityConverter,
-            Func<TEntity, TReadable> entityToPocoConverter)
-            : base(includeIdField, filter, validationDefinition, storage, pocoToEntityConverter, entityToPocoConverter, pocoToEntityConverter, pocoToEntityConverter)
-        {
-        }
+    //{
+    //    public GenericJsGridController(
+    //        bool includeIdField,
+    //        IGridRequestOptions gridRequestOptions,
+    //        object validationDefinition,
+    //        IJsGridStorage storage,
+    //        Func<TEntity, TEntity> pocoToEntityConverter,
+    //        Func<TEntity, TEntity> entityToPocoConverter)
+    //        : base(gridRequestOptions, includeIdField, pocoToEntityConverter, entityToPocoConverter, pocoToEntityConverter, pocoToEntityConverter)
+    //    {
+    //    }
 
-        public GenericJsGridController(
-            Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> filter,
-            object validationDefinition,
-            IJsGridStorage storage,
-            Func<TReadable, TEntity> pocoToEntityConverter,
-            Func<TEntity, TReadable> entityToPocoConverter)
-            : base(false, filter, validationDefinition, storage, pocoToEntityConverter, entityToPocoConverter, pocoToEntityConverter, pocoToEntityConverter)
-        {
-        }
-    }
+    //    public GenericJsGridController(
+    //        IGridRequestOptions gridRequestOptions,
+    //        object validationDefinition,
+    //        IJsGridStorage storage,
+    //        Func<TEntity, TEntity> pocoToEntityConverter,
+    //        Func<TEntity, TEntity> entityToPocoConverter)
+    //        : base(gridRequestOptions, false, pocoToEntityConverter, entityToPocoConverter, pocoToEntityConverter, pocoToEntityConverter)
+    //    {
+    //    }
+    //}
 
-    public class GenericJsGridController<TEntity, TReadable, TUpdateable> : GenericJsGridController<TEntity, TReadable, TUpdateable, TReadable, TReadable>
+    //public class GenericJsGridController<TEntity, TEntity, TEntity> : GenericJsGridController<TEntity, TEntity, TEntity, TEntity, TEntity>
 
-    {
-        public GenericJsGridController(
-            bool includeIdField,
-            Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> filter,
-            object validationDefinition,
-            IJsGridStorage storage,
-            Func<TReadable, TEntity> pocoToEntityConverter,
-            Func<TEntity, TReadable> entityToPocoConverter,
-            Func<TUpdateable, TEntity> editableToEntityConverter)
-            : base(includeIdField, filter, validationDefinition, storage, pocoToEntityConverter, entityToPocoConverter, editableToEntityConverter, pocoToEntityConverter)
-        {
-        }
+    //{
+    //    public GenericJsGridController(
+    //        bool includeIdField,
+    //        IGridRequestOptions gridRequestOptions,
+    //        object validationDefinition,
+    //        IJsGridStorage storage,
+    //        Func<TEntity, TEntity> pocoToEntityConverter,
+    //        Func<TEntity, TEntity> entityToPocoConverter,
+    //        Func<TEntity, TEntity> editableToEntityConverter)
+    //        : base(gridRequestOptions, includeIdField, pocoToEntityConverter, entityToPocoConverter, editableToEntityConverter, pocoToEntityConverter)
+    //    {
+    //    }
 
-        public GenericJsGridController(
-            Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> filter,
-            object validationDefinition,
-            IJsGridStorage storage,
-            Func<TReadable, TEntity> pocoToEntityConverter,
-            Func<TEntity, TReadable> entityToPocoConverter,
-            Func<TUpdateable, TEntity> editableToEntityConverter)
-            : base(false, filter, validationDefinition, storage, pocoToEntityConverter, entityToPocoConverter, editableToEntityConverter, pocoToEntityConverter)
-        {
-        }
-    }
+    //    public GenericJsGridController(
+    //        IGridRequestOptions gridRequestOptions,
+    //        object validationDefinition,
+    //        IJsGridStorage storage,
+    //        Func<TEntity, TEntity> pocoToEntityConverter,
+    //        Func<TEntity, TEntity> entityToPocoConverter,
+    //        Func<TEntity, TEntity> editableToEntityConverter)
+    //        : base(gridRequestOptions, false, pocoToEntityConverter, entityToPocoConverter, editableToEntityConverter, pocoToEntityConverter)
+    //    {
+    //    }
+    //}
     
    
     public class GenericJsGridController : GenericJsGridController<dynamic>
     {
-        public GenericJsGridController(bool includeIdField, Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> filter, object validationDefinition, IJsGridStorage storage)
-            : base(includeIdField, filter, validationDefinition, storage)
+        public GenericJsGridController(IGridRequestOptions gridRequestOptions,bool includeIdField=false)
+            : base(gridRequestOptions, includeIdField)
         {
         }
 
-        public GenericJsGridController(Func<IEnumerable<dynamic>, dynamic, IEnumerable<dynamic>> filter, object validationDefinition, IJsGridStorage storage)
-            : base(filter, validationDefinition, storage)
-        {
-        }
+       
     }
 
     #endregion
