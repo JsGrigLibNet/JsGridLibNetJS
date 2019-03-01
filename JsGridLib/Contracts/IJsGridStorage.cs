@@ -34,5 +34,7 @@
         void Delete(string storageAccess, string id);
 
         object GetDataSampleForSchemaByDataAccess(string dataaccess);
+
+        object GetReplacementDataSampleForSchemaByDataAccess(string dataaccess);
     }
 }

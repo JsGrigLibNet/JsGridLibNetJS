@@ -115,8 +115,14 @@
                 return Request.CreateErrorResponse(HttpStatusCode.Unauthorized, $"You are not allowed to access {dataaccess}");
             }
             var sample = this.Service.GetDataSampleForSchema(this.Request, dataaccess);
+            var ReplacementSchema = this.Service.GetDataSampleForSchemaReplacement(this.Request, dataaccess);
             var schema = (object)this.Service.GetSchemaAndSettings(sample);
-            return this.Request.CreateResponse(HttpStatusCode.OK, schema);
+          
+            return this.Request.CreateResponse(HttpStatusCode.OK, new
+            {
+                Schema= schema,
+                ReplacementSchema= ReplacementSchema
+            });
         }
 
         [HttpGet]

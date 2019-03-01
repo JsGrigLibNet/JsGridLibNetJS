@@ -108,5 +108,10 @@
         {
            return this.jsGridDataStorage.GetDataSampleForSchemaByDataAccess(dataaccess);
         }
+
+        public object GetDataSampleForSchemaReplacement(HttpRequestMessage request, string dataaccess)
+        {
+            return this.jsGridDataStorage.GetReplacementDataSampleForSchemaByDataAccess(dataaccess);
+        }
     }
 }

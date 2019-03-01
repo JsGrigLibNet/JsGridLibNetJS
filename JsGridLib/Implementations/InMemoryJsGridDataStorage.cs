@@ -106,5 +106,11 @@
             dynamic sample = this.db[dataaccess].First();
             return sample;
         }
+
+        public object GetReplacementDataSampleForSchemaByDataAccess(string dataaccess)
+        {
+           
+            return null;
+        }
     }
 }

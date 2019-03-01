@@ -49,7 +49,24 @@ var gridAppBuilder = function (opts) {
     $.get("apig/" + opts.page + "/" + (opts.controllerSchema || opts.page) + "/Get?id=0").done(function (composite) {
         console.log(composite);
         var col = (opts.hideSelectionBoxColumn && []) || [{ type: 'checkbox', allowFiltering: false, allowSorting: false, width: '40' }];
-        col = col.concat(composite.FieldsReadable);
+
+        var fields = composite.Schema.FieldsReadable;
+        var replacements = composite.ReplacementSchema;
+        if (replacements) {
+            for (var j = 0; j < fields.length; j++) {
+                for (var property in replacements) {
+                    if (replacements.hasOwnProperty(property)) {
+                        var candidate = fields[j]["headerText"] === property;
+                        var noSuchExist = fields[j]["headerText"] !== replacements[property];
+                        if (candidate && noSuchExist) {
+                            fields[j]["headerText"] = replacements[property];
+                        }
+                    }
+                }
+            }
+        }
+
+        col = col.concat(fields);
         if (!opts.hideActionsColumn) {
             col.push({
                 headerText: 'Actions', width: 60,
